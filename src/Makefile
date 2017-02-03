@@ -1,17 +1,17 @@
 IDIR =../include
 CC=gcc
-CFLAGS=-I$(IDIR)
+CFLAGS=-I$(IDIR) -ggdb
 
 ODIR=../obj
 LDIR =../lib
-BDIR = ../build
+
 
 LIBS=-lm
 
-_DEPS = lbm.h
+_DEPS = lbm.h utilities.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-_OBJ = lbm.o 
+_OBJ = lbm.o utilities.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 
@@ -19,9 +19,9 @@ $(ODIR)/%.o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 lbm: $(OBJ)
-	gcc -o $(BDIR)/$@ $^ $(CFLAGS) $(LIBS)
+	gcc -o $@ $^ $(CFLAGS) $(LIBS)
 
 .PHONY: clean
 
 clean:
-	rm -f $(ODIR)/*.o *~ core $(INCDIR)/*~ 
+	rm -f *.o *~ core $(INCDIR)/*~ 
