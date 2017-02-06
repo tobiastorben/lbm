@@ -13,7 +13,6 @@ int** readObstacleData(int nBBcells) {
 	for(int l = 0; l < 2; l++){
 		bbCells[l] = (int *)malloc(nBBcells * sizeof(int));
 	}
-
 	int i = 0;
 	int j = 0;
 	int k = 0;
@@ -57,10 +56,9 @@ void printMatI(int** mat, int n, int m) {
 	printf("\n");
 }
 void printMatD(double** mat, int n, int m) {
-	printf("");
 	for (int i = 0; i < n; i++){
 		for (int j = 0; j < m; j++){
-		printf("%5.0f ", mat[i][j]);
+		printf("%f ", mat[i][j]);
 		}
 	printf("\n");
 	}
@@ -81,7 +79,7 @@ double** initUx(int nx,int ny,double uIn) {
 	for (i = 0; i < nx; i++){
 		for (j = 0; j < ny; j++) {
 			y = j-0.5;//Change??
-			ux[i][j] = (4*uIn/(H*H))*(y*H-y*y);
+			ux[i][j] = (4.0*uIn/(H*H))*(y*H-y*y);
 		}
 	}
 return ux;	
@@ -113,8 +111,8 @@ double*** initFin(int nf,int nx, int ny, double* ex, double* ey,
 	for (k = 0; k < nf; k++){
 		for (i = 0; i < nx; i++){
 			for (j = 0; j < ny; j++){
-			u = 3*(ex[k]*ux[i][j] + ey[k]*uy[i][j]);
-			fIn[k][i][j] = rho[i][j]*w[k]*(1+u+0.5*u*u-1.5*(ux[i][j]*ux[i][j]+uy[i][j]*uy[i][j]));
+			u = 3.0*(ex[k]*ux[i][j] + ey[k]*uy[i][j]);
+			fIn[k][i][j] = rho[i][j]*w[k]*(1.0+u+0.5*u*u-1.5*(ux[i][j]*ux[i][j]+uy[i][j]*uy[i][j]));
 			}
 		}
 	}
@@ -179,36 +177,36 @@ void inlet(double** ux, double** uy, double** rho, double*** fIn, double uIn, in
 	for (int j = 1; j < (ny-1);j++) {
 		y = j-0.5;//Change??
 		//Poiseuille and Zou/He BC
-		ux[0][j] = (4*uIn/(H*H))*(y*H-y*y);
+		ux[0][j] = (4.0*uIn/(H*H))*(y*H-y*y);
 		uy[0][j] = 0;
 		sum1 = fIn[0][0][j] + fIn[2][0][j] + fIn[4][0][j];
 		sum2 = fIn[3][0][j] + fIn[6][0][j] + fIn[7][0][j];
-		rho[0][j] = (1/(1-ux[0][j]))*(sum1 + 2*sum2);
+		rho[0][j] = (1.0/(1-ux[0][j]))*(sum1 + 2*sum2);
 		fIn[1][0][j] = fIn[3][0][j] + (2.0/3)*rho[0][j]*ux[0][j];
 		fIn[5][0][j] = fIn[7][0][j] + 0.5*(fIn[4][0][j]-fIn[2][0][j])
 					   +0.5*(rho[0][j]*uy[0][j])//ALWAYS ZERO??
-					   +(1/6)*(rho[0][j]*ux[0][j]);
+					   +(1.0/6)*(rho[0][j]*ux[0][j]);
 		fIn[8][0][j] = fIn[6][0][j] + 0.5*(fIn[2][0][j]-fIn[4][0][j])
 					  -0.5*(rho[0][j]*uy[0][j])//ALWAYS ZERO?
-					   +(1/6)*(rho[0][j]*ux[0][j]);
+					   +(1.0/6)*(rho[0][j]*ux[0][j]);
 	}
 }
 
 void outlet(double** ux, double** uy, double** rho, double*** fIn, int nx, int ny) {
 	double sum1, sum2;
 	for (int j = 1; j < (ny-1);j++) {
-		rho[nx-1][j] = 1;
+		rho[nx-1][j] = 1.0;
 		sum1 = fIn[0][nx-1][j] + fIn[2][nx-1][j] + fIn[4][nx-1][j];
 		sum2 = fIn[1][nx-1][j] + fIn[5][nx-1][j] + fIn[8][nx-1][j];
-		ux[nx-1][j] = -1 + 1./(rho[nx-1][j])*(sum1 + 2*sum2);//UNCERTAIN!
+		ux[nx-1][j] = -1.0 + (1.0/(rho[nx-1][j]))*(sum1 + 2.0*sum2);//UNCERTAIN!
 		uy[nx-1][j] = 0;
 		fIn[3][nx-1][j] = fIn[1][nx-1][j] - (2.0/3)*rho[nx-1][j]*ux[nx-1][j];
 		fIn[7][nx-1][j] = fIn[5][nx-1][j] + 0.5*(fIn[2][nx-1][j]-fIn[4][nx-1][j])
 					   -0.5*(rho[nx-1][j]*uy[nx-1][j])//ALWAYS ZERO?
-					   -(1/6)*(rho[nx-1][j]*ux[nx-1][j]);
+					   -(1.0/6)*(rho[nx-1][j]*ux[nx-1][j]);
 		fIn[6][nx-1][j] = fIn[8][nx-1][j] + 0.5*(fIn[4][nx-1][j]-fIn[2][nx-1][j])
 					  +0.5*(rho[nx-1][j]*uy[nx-1][j])//ALWAYS ZERO?
-					  -(1/6)*(rho[nx-1][j]*ux[nx-1][j]);
+					  -(1.0/6)*(rho[nx-1][j]*ux[nx-1][j]);
 	}
 }
 
@@ -219,7 +217,7 @@ void collide(double** ux, double** uy, double***fIn, double*** fOut, double** rh
 	for (k = 0; k < nf; k++){
 		for (i = 0; i < nx; i++){
 			for (j = 0; j < ny; j++){
-			u = 3*(ex[k]*ux[i][j] + ey[k]*uy[i][j]);
+			u = 3.0*(ex[k]*ux[i][j] + ey[k]*uy[i][j]);
 			fEq = rho[i][j]*w[k]*(1+u+0.5*u*u
 			-1.5*(ux[i][j]*ux[i][j]+uy[i][j]*uy[i][j]));
 			fOut[k][i][j] = fIn[k][i][j]-tau*(fIn[k][i][j]-fEq);
@@ -244,13 +242,13 @@ void bounce(double*** fIn, double*** fOut,int nx,int ny,int nf, int** bbCells, i
 	for (i = 0; i < nx; i++) {
 		for (k = 0; k < nf; k++){
 			fOut[k][i][0] = fIn[opposite[k]][i][0];
-			fOut[k][i][ny] = fIn[opposite[k]][i][ny];
+			fOut[k][i][ny-1] = fIn[opposite[k]][i][ny-1];
 		}
 	}
 }
 
 void stream(double*** fIn, double*** fOut,int* ex,int* ey, int nx, int ny, int nf) {
-	//What to do with boundary nodes? Circular shift?
+	//Uglu solution. Improve?
 	int i,j,k;
 
 	//Interior
