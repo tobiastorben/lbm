@@ -1,11 +1,12 @@
 //Main program
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
 #include "utilities.h"
 
 //Indexing: ux(i,j) = ux(x = i*h,y=j*h);
 
 int main(int argc, char** argv) {
-	time_t t1,t2;
-	t1 = clock();
 	//Define grid
 	int nx = 400;
 	int ny = 100;
@@ -17,7 +18,7 @@ int main(int argc, char** argv) {
 	double tau = 1/(3*nu+0.5);//Relaxation parameter of BGK collision operator
 	
 	//Define simulations parameters
-	int nIter = 500;
+	int nIter = 10000;
 	int cyclesPerWrite = 5;
 	
 	
@@ -60,13 +61,11 @@ int main(int argc, char** argv) {
 		stream(fIn,fOut,exI,eyI,nx,ny,nf);
 
 	}
-	t2 = clock();
-	printf("Time spent: %f s\n", ((float) t2-(float) t1)/1000.0);
 	csvWriteD(ux,nx,ny, "ux.csv");
 	csvWriteD(uy,nx,ny, "uy.csv");
 	csvWriteD(rho,nx,ny, "rho.csv");
-	csvWriteD(fIn[7],nx,ny, "fin.csv");
-	csvWriteD(fOut[7],nx,ny, "fout.csv");
+	csvWriteD(fIn[0],nx,ny, "fin.csv");
+	csvWriteD(fOut[0],nx,ny, "fout.csv");
 	return 0;
 }
 

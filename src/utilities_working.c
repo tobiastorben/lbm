@@ -1,5 +1,7 @@
 #include "utilities.h"
-
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 //Reads geometry of bounce back cells from a file, stores it in a vector
 //of indices
@@ -145,84 +147,79 @@ double** initRho(int nx, int ny, double initialRho) {
 }
 
 void updateRho(double** rho, double*** fIn, int nx, int ny, int nf) {
-	double sum;
 	for (int i = 0; i < nx; i++) {
 		for (int j = 0; j < ny; j++){
-			sum = 0;
+			rho[i][j] = 0;
 			for (int k = 0; k < nf; k++) {
-				sum += fIn[k][i][j];
+				rho[i][j] += fIn[k][i][j];
 			}
-			rho[i][j] = sum;
 		}
 	}
 }
 
 void updateU(double** ux, double** uy, double*** fIn,
 			 double** rho, double* ex, double* ey, int nx, int ny, int nf){
-	double sumX, sumY;			 
-	for (int i = 0; i < nx; i++) {
+	for (int i = 0; i < nx; i++) {//ARE THE LIMITS CORRECT? (1:ny-1)??
 		for (int j = 0; j < ny; j++){
-			sumX = 0;
-			sumY = 0;
+			ux[i][j] = 0;
+			uy[i][j] = 0;
 			for (int k = 0; k < nf; k++) {
-				sumX += fIn[k][i][j]*ex[k];
-				sumY += fIn[k][i][j]*ey[k];
+				ux[i][j] += fIn[k][i][j]*ex[k]/rho[i][j];
+				uy[i][j] += fIn[k][i][j]*ey[k]/rho[i][j];
 			}
-			ux[i][j] = sumX/rho[i][j];
-			uy[i][j] = sumY/rho[i][j];
 		}
 	} 				 
 }
 
 void inlet(double** ux, double** uy, double** rho, double*** fIn, double uIn, int nx, int ny) {
-	double y, sum1, sum2, rhoJ;
+	double y, sum1, sum2;
 	double H = (double) ny-2;
-	double coeff = 4.0*uIn/(H*H);
 	for (int j = 1; j < (ny-1);j++) {
-		y = j-0.5;//Change?? 
+		y = j-0.5;//Change??
 		//Poiseuille and Zou/He BC
-		//Consider to change indexing of fIn
-		ux[0][j] = coeff*y*(H-y);
+		ux[0][j] = (4.0*uIn/(H*H))*(y*H-y*y);
 		uy[0][j] = 0;
 		sum1 = fIn[0][0][j] + fIn[2][0][j] + fIn[4][0][j];
 		sum2 = fIn[3][0][j] + fIn[6][0][j] + fIn[7][0][j];
-		rhoJ = (1.0/(1-ux[0][j]))*(sum1 + 2*sum2);
-		fIn[1][0][j] = fIn[3][0][j] + (2.0/3)*rhoJ*ux[0][j];
+		rho[0][j] = (1.0/(1-ux[0][j]))*(sum1 + 2*sum2);
+		fIn[1][0][j] = fIn[3][0][j] + (2.0/3)*rho[0][j]*ux[0][j];
 		fIn[5][0][j] = fIn[7][0][j] + 0.5*(fIn[4][0][j]-fIn[2][0][j])
-					   +(1.0/6)*(rhoJ*ux[0][j]);
+					   +0.5*(rho[0][j]*uy[0][j])//ALWAYS ZERO??
+					   +(1.0/6)*(rho[0][j]*ux[0][j]);
 		fIn[8][0][j] = fIn[6][0][j] + 0.5*(fIn[2][0][j]-fIn[4][0][j])
-						+(1.0/6)*(rhoJ*ux[0][j]);
-		rho[0][j] = rhoJ;
+					  -0.5*(rho[0][j]*uy[0][j])//ALWAYS ZERO?
+					   +(1.0/6)*(rho[0][j]*ux[0][j]);
 	}
 }
 
 void outlet(double** ux, double** uy, double** rho, double*** fIn, int nx, int ny) {
 	double sum1, sum2;
 	for (int j = 1; j < (ny-1);j++) {
+		rho[nx-1][j] = 1.0;
 		sum1 = fIn[0][nx-1][j] + fIn[2][nx-1][j] + fIn[4][nx-1][j];
 		sum2 = fIn[1][nx-1][j] + fIn[5][nx-1][j] + fIn[8][nx-1][j];
-		ux[nx-1][j] = -1.0 +sum1 + 2.0*sum2;//UNCERTAIN!
+		ux[nx-1][j] = -1.0 + (1.0/(rho[nx-1][j]))*(sum1 + 2.0*sum2);//UNCERTAIN!
 		uy[nx-1][j] = 0;
-		fIn[3][nx-1][j] = fIn[1][nx-1][j] - (2.0/3)*ux[nx-1][j];
+		fIn[3][nx-1][j] = fIn[1][nx-1][j] - (2.0/3)*rho[nx-1][j]*ux[nx-1][j];
 		fIn[7][nx-1][j] = fIn[5][nx-1][j] + 0.5*(fIn[2][nx-1][j]-fIn[4][nx-1][j])
-					   -(1.0/6)*ux[nx-1][j];
+					   -0.5*(rho[nx-1][j]*uy[nx-1][j])//ALWAYS ZERO?
+					   -(1.0/6)*(rho[nx-1][j]*ux[nx-1][j]);
 		fIn[6][nx-1][j] = fIn[8][nx-1][j] + 0.5*(fIn[4][nx-1][j]-fIn[2][nx-1][j])
-					  -(1.0/6)*ux[nx-1][j];
-		rho[nx-1][j] = 1.0;
+					  +0.5*(rho[nx-1][j]*uy[nx-1][j])//ALWAYS ZERO?
+					  -(1.0/6)*(rho[nx-1][j]*ux[nx-1][j]);
 	}
 }
 
 void collide(double** ux, double** uy, double***fIn, double*** fOut, double** rho, double* ex,
 			 double* ey, int nx,int ny, int nf, double tau, double* w){
-	double u, fEq, uSq;
+	double u, fEq;
 	int i,j,k;
-	
+	for (k = 0; k < nf; k++){
 		for (i = 0; i < nx; i++){
 			for (j = 0; j < ny; j++){
-				uSq = 1.5*(ux[i][j]*ux[i][j]+uy[i][j]*uy[i][j]);
-				for (k = 0; k < nf; k++){
 			u = 3.0*(ex[k]*ux[i][j] + ey[k]*uy[i][j]);
-			fEq = rho[i][j]*w[k]*(1+u+0.5*u*u-uSq);
+			fEq = rho[i][j]*w[k]*(1+u+0.5*u*u
+			-1.5*(ux[i][j]*ux[i][j]+uy[i][j]*uy[i][j]));
 			fOut[k][i][j] = fIn[k][i][j]-tau*(fIn[k][i][j]-fEq);
 			}
 		}
@@ -251,7 +248,7 @@ void bounce(double*** fIn, double*** fOut,int nx,int ny,int nf, int** bbCells, i
 }
 
 void stream(double*** fIn, double*** fOut,int* ex,int* ey, int nx, int ny, int nf) {
-	//Ugly solution. Improve?
+	//Uglu solution. Improve?
 	int i,j,k;
 
 	//Interior
