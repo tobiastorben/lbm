@@ -1,6 +1,6 @@
 IDIR =../include
 CC=gcc
-CFLAGS=-I$(IDIR)
+CFLAGS=-I$(IDIR) -pg -ggdb
 
 ODIR=../obj
 LDIR =../lib
@@ -24,4 +24,4 @@ lbm: $(OBJ)
 .PHONY: clean
 
 clean:
-	rm -f *.o *~ core $(INCDIR)/*~ 
+	rm -f $(ODIR)/*
