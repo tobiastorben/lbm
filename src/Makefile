@@ -1,6 +1,6 @@
 IDIR =../include
 CC=gcc
-CFLAGS=-I$(IDIR) -ggdb
+CFLAGS=-I$(IDIR) -ggdb -std=c99
 
 ODIR=../obj
 LDIR =../lib
@@ -8,7 +8,7 @@ LDIR =../lib
 
 LIBS=-lm
 
-_DEPS = lbm.h utilities.h
+_DEPS = utilities.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
 _OBJ = lbm.o utilities.o

@@ -4,7 +4,7 @@
 //Reads geometry of bounce back cells from a file, stores it in a vector
 //of indices
 int** readObstacleData(int nBBcells) {
-	FILE* fp = fopen("obstacle.csv","r");
+	FILE* fp = fopen("obstacle.mask","r");
 	char* line = malloc(nBBcells*100);		
 	char* token;
 	int** bbCells = (int **)malloc(2 * sizeof(int*));
