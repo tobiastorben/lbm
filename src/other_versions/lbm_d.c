@@ -14,8 +14,8 @@ int main(int argc, char* argv) {
 	//Define flow parameters
 	double uIn = 0.1;
 	double Re = 100;
-	double nu = uIn*2*(ny/10 +1)/Re;
-	double tau = 1/(3*nu+0.5);//Relaxation parameter of BGK collision operator
+	double nu = uIn*2.0*(ny/10 +1.0)/Re;
+	double tau = 1.0/(3.0*nu+0.5);//Relaxation parameter of BGK collision operator
 	
 	//Define simulations parameters
 	int nIter = 10000;

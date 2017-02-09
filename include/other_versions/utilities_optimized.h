@@ -1,3 +1,7 @@
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
 int** readObstacleData(int nBBcells);
 void printVecD(double* vec, int n);
 void printVecI(int* vec, int n);

@@ -3,14 +3,11 @@
 
 //Reads geometry of bounce back cells from a file, stores it in a vector
 //of indices
-int** readObstacleData(int nBBcells) {
+int* readObstacleData(int nBBcells) {
 	FILE* fp = fopen("obstacle.mask","r");
 	char* line = malloc(nBBcells*100);		
 	char* token;
-	int** bbCells = (int **)malloc(2 * sizeof(int*));
-	for(int l = 0; l < 2; l++){
-		bbCells[l] = (int *)malloc(nBBcells * sizeof(int));
-	}
+	int* bbCells = malloc(2*nBBcells*sizeof(int));
 	int i = 0;
 	int j = 0;
 	int k = 0;
@@ -20,8 +17,8 @@ int** readObstacleData(int nBBcells) {
 		int j = 0;
 		while( token != NULL ){ 	    
 		if (atoi(token)) {
-			bbCells[0][k] = i;
-			bbCells[1][k] = j;
+			bbCells[k] = i;
+			bbCells[1*nBBcells+k] = j;
 			k++;
 		}
 		token = strtok(NULL, ",");
@@ -44,224 +41,204 @@ void printVecI(int* vec, int n) {
 	}	
 }
 
-void printMatI(int** mat, int n, int m) {
+void printMatI(int* mat, int n, int m) {
 	for (int i = 0; i < n; i++){
 		for (int j = 0; j < m; j++){
-		printf("%8d ", mat[i][j]);
+		printf("%8d ", mat[m*i + j]);
 		}
 	printf("\n");
 	}
 	printf("\n");
 }
-void printMatD(double** mat, int n, int m) {
+void printMatD(double* mat, int n, int m) {
 	for (int i = 0; i < n; i++){
 		for (int j = 0; j < m; j++){
-		printf("%f ", mat[i][j]);
+		printf("%f ", mat[m*i + j]);
 		}
 	printf("\n");
 	}
 printf("\n");	
 }
 
-double** initUx(int nx,int ny,double uIn) {
+double* initUx(int nx,int ny,double uIn) {
 	double H = (double) ny-2;
 	int i,j;
 	double y;
 	
 	//Initialize ux as Poiseuille flow
-	double** ux = (double **)malloc(nx * sizeof(double*));
-	for(i = 0; i < nx; i++){
-		ux[i] = (double *)malloc(ny * sizeof(double));
-	}
-	
+	double* ux = malloc(nx*ny * sizeof(double));
 	for (i = 0; i < nx; i++){
 		for (j = 0; j < ny; j++) {
 			y = j-0.5;//Change??
-			ux[i][j] = (4.0*uIn/(H*H))*(y*H-y*y);
+			ux[ny*i + j] = (4.0*uIn/(H*H))*(y*H-y*y);
 		}
 	}
 return ux;	
 }
 
-double** initUy(int nx,int ny) {	
+double* initUy(int nx,int ny) {	
 	//Zero initialize uy
-	double** uy = (double **)calloc(nx,sizeof(double*));
-	for(int i = 0; i < nx; i++){
-		uy[i] = (double *)calloc(ny,sizeof(double));
-	}
+	double* uy = calloc(nx*ny,sizeof(double));
 	return uy;
 }
 
-double*** initFin(int nf,int nx, int ny, double* ex, double* ey,
-				double** ux, double** uy, double* w, double** rho) {
+double* initFin(int nf,int nx, int ny, double* ex, double* ey,
+				double* ux, double* uy, double* w, double* rho) {
 	int i,j,k;
 	double u;
-	//Allocate three dimensional array. Indexed as: [f][nx-1][ny]
-	double*** fIn = (double ***)malloc(nf * sizeof(double**));
-	for(i = 0; i < nf; i++){
-		fIn[i] = (double **)malloc(nx * sizeof(double*));
-		for(j = 0; j < nx; j++){
-		fIn[i][j] = (double*)malloc(ny * sizeof(double));
-		}
-	}
+	//Allocate three dimensional array. Indexed as: [f*nx*ny+(nx-1)*ny+ny]
+	double* fIn = malloc(nx*ny*nf* sizeof(double));
+	
 	//Initialize particle distribution as equilibrium distrubution for
 	//for a Poiseuille flow
 	for (k = 0; k < nf; k++){
 		for (i = 0; i < nx; i++){
 			for (j = 0; j < ny; j++){
-			u = 3.0*(ex[k]*ux[i][j] + ey[k]*uy[i][j]);
-			fIn[k][i][j] = rho[i][j]*w[k]*(1.0+u+0.5*u*u-1.5*(ux[i][j]*ux[i][j]+uy[i][j]*uy[i][j]));
+			u = 3.0*(ex[k]*ux[ny*i + j] + ey[k]*uy[ny*i + j]);
+			fIn[nx*ny*k + ny*i + j] = rho[ny*i + j]*w[k]*(1.0+u+0.5*u*u-1.5*(ux[ny*i + j]*ux[ny*i + j]+uy[ny*i + j]*uy[ny*i + j]));
 			}
 		}
 	}
 	return fIn;
 }
 
-double*** initFout(int nx,int ny, int nf) {
-	int i,j;
-	double*** fOut = (double ***)malloc(nf * sizeof(double**));
-	for(i = 0; i < nf; i++){
-		fOut[i] = (double **)malloc(nx * sizeof(double*));
-		for(j = 0; j < nx; j++){
-		fOut[i][j] = (double*)malloc(ny * sizeof(double));
-		}
-	}
+double* initFout(int nx,int ny, int nf) {
+	double* fOut = malloc(nx*ny*nf* sizeof(double));
 	return fOut;
 }
 
-double** initRho(int nx, int ny, double initialRho) {
+double* initRho(int nx, int ny, double initialRho) {
 	int i,j;
-	double** rho = (double**) malloc(nx*sizeof(double*));
-	for(int i = 0; i < nx; i++){
-		rho[i] = (double *)malloc(ny*sizeof(double));
-	}
+	double* rho = malloc(nx*ny* sizeof(double));
 	
 	for (i = 0; i < nx; i++){
 			for (j = 0; j < ny; j++){
-			rho[i][j] = initialRho;
+			rho[ny*i + j] = initialRho;
 			}
 		}
 	return rho;
 }
 
-void updateRho(double** rho, double*** fIn, int nx, int ny, int nf) {
+void updateRho(double* rho, double* fIn, int nx, int ny, int nf) {
 	double sum;
 	for (int i = 0; i < nx; i++) {
 		for (int j = 0; j < ny; j++){
 			sum = 0;
 			for (int k = 0; k < nf; k++) {
-				sum += fIn[k][i][j];
+				sum += fIn[nx*ny*k + ny*i + j];
 			}
-			rho[i][j] = sum;
+			rho[ny*i + j] = sum;
 		}
 	}
 }
 
-void updateU(double** ux, double** uy, double*** fIn,
-			 double** rho, double* ex, double* ey, int nx, int ny, int nf){
-	double sumX, sumY;			 
+void updateU(double* ux, double* uy, double* fIn,
+			 double* rho, double* ex, double* ey, int nx, int ny, int nf){
+	double sumX, sumY;
+	int nxny = nx*ny;
 	for (int i = 0; i < nx; i++) {
 		for (int j = 0; j < ny; j++){
 			sumX = 0;
 			sumY = 0;
 			for (int k = 0; k < nf; k++) {
-				sumX += fIn[k][i][j]*ex[k];
-				sumY += fIn[k][i][j]*ey[k];
+				sumX += fIn[nxny*k + ny*i + j]*ex[k];
+				sumY += fIn[nxny*k + ny*i + j]*ey[k];
 			}
-			ux[i][j] = sumX/rho[i][j];
-			uy[i][j] = sumY/rho[i][j];
+			ux[ny*i + j] = sumX/rho[ny*i + j];
+			uy[ny*i + j] = sumY/rho[ny*i + j];
 		}
 	} 				 
 }
 
-void inlet(double** ux, double** uy, double** rho, double*** fIn, double uIn, int nx, int ny) {
+void inlet(double* ux, double* uy, double* rho, double* fIn, double uIn, int nx, int ny) {
 	double y, sum1, sum2, rhoJ;
-	double H = (double) ny-2;
+	double H = (double) ny-2.0;
 	double coeff = 4.0*uIn/(H*H);
 	for (int j = 1; j < (ny-1);j++) {
 		y = j-0.5;//Change?? 
 		//Poiseuille and Zou/He BC
 		//Consider to change indexing of fIn
-		ux[0][j] = coeff*y*(H-y);
-		uy[0][j] = 0;
-		sum1 = fIn[0][0][j] + fIn[2][0][j] + fIn[4][0][j];
-		sum2 = fIn[3][0][j] + fIn[6][0][j] + fIn[7][0][j];
-		rhoJ = (1.0/(1-ux[0][j]))*(sum1 + 2*sum2);
-		fIn[1][0][j] = fIn[3][0][j] + (2.0/3)*rhoJ*ux[0][j];
-		fIn[5][0][j] = fIn[7][0][j] + 0.5*(fIn[4][0][j]-fIn[2][0][j])
-					   +(1.0/6)*(rhoJ*ux[0][j]);
-		fIn[8][0][j] = fIn[6][0][j] + 0.5*(fIn[2][0][j]-fIn[4][0][j])
-						+(1.0/6)*(rhoJ*ux[0][j]);
-		rho[0][j] = rhoJ;
+		ux[j] = coeff*y*(H-y);
+		uy[j] = 0;
+		sum1 = fIn[j] + fIn[2*nx*ny +j] + fIn[4*nx*ny+j];
+		sum2 = fIn[3*nx*ny +j] + fIn[6*nx*ny + j] + fIn[7*nx*ny + j];
+		rhoJ = (1.0/(1.0-ux[j]))*(sum1 + 2.0*sum2);
+		fIn[1*nx*ny+j] = fIn[3*nx*ny+j] + (2.0/3)*rhoJ*ux[j];
+		fIn[5*nx*ny+j] = fIn[7*nx*ny+j] + 0.5*(fIn[4*nx*ny+j]-fIn[2*nx*ny+j])
+					   +(1.0/6)*(rhoJ*ux[j]);
+		fIn[8*nx*ny+j] = fIn[6*nx*ny+j] + 0.5*(fIn[2*nx*ny+j]-fIn[4*nx*ny+j])
+						+(1.0/6)*(rhoJ*ux[j]);
+		rho[j] = rhoJ;
 	}
 }
 
-void outlet(double** ux, double** uy, double** rho, double*** fIn, int nx, int ny) {
+void outlet(double* ux, double* uy, double* rho, double* fIn, int nx, int ny) {
 	double sum1, sum2;
 	for (int j = 1; j < (ny-1);j++) {
-		sum1 = fIn[0][nx-1][j] + fIn[2][nx-1][j] + fIn[4][nx-1][j];
-		sum2 = fIn[1][nx-1][j] + fIn[5][nx-1][j] + fIn[8][nx-1][j];
-		ux[nx-1][j] = -1.0 +sum1 + 2.0*sum2;//UNCERTAIN!
-		uy[nx-1][j] = 0;
-		fIn[3][nx-1][j] = fIn[1][nx-1][j] - (2.0/3)*ux[nx-1][j];
-		fIn[7][nx-1][j] = fIn[5][nx-1][j] + 0.5*(fIn[2][nx-1][j]-fIn[4][nx-1][j])
-					   -(1.0/6)*ux[nx-1][j];
-		fIn[6][nx-1][j] = fIn[8][nx-1][j] + 0.5*(fIn[4][nx-1][j]-fIn[2][nx-1][j])
-					  -(1.0/6)*ux[nx-1][j];
-		rho[nx-1][j] = 1.0;
+		sum1 = fIn[(nx-1)*ny+j] + fIn[2*nx*ny+(nx-1)*ny+j] + fIn[4*nx*ny+(nx-1)*ny+j];
+		sum2 = fIn[1*nx*ny+(nx-1)*ny+j] + fIn[5*nx*ny+(nx-1)*ny+j] + fIn[8*nx*ny+(nx-1)*ny+j];
+		ux[(nx-1)*ny +j] = -1.0 +sum1 + 2.0*sum2;//UNCERTAIN!
+		uy[(nx-1)*ny +j] = 0;
+		fIn[3*nx*ny+(nx-1)*ny + j] = fIn[1*nx*ny+(nx-1)*ny + j] - (2.0/3)*ux[(nx-1)*ny +j];
+		fIn[7*nx*ny+(nx-1)*ny + j] = fIn[5*nx*ny+(nx-1)*ny + j] + 0.5*(fIn[2*nx*ny+(nx-1)*ny + j]-fIn[4*nx*ny+(nx-1)*ny + j])
+					   -(1.0/6)*ux[(nx-1)*ny +j];
+		fIn[6*nx*ny+(nx-1)*ny + j] = fIn[8*nx*ny+(nx-1)*ny + j] + 0.5*(fIn[4*nx*ny+(nx-1)*ny + j]-fIn[2*nx*ny+(nx-1)*ny + j])
+					  -(1.0/6)*ux[(nx-1)*ny +j];
+		rho[(nx-1)*ny +j] = 1.0;
 	}
 }
 
-void collide(double** ux, double** uy, double***fIn, double*** fOut, double** rho, double* ex,
+void collide(double* ux, double* uy, double*fIn, double* fOut, double* rho, double* ex,
 			 double* ey, int nx,int ny, int nf, double tau, double* w){
 	double u, fEq, uSq,rhoIJ, uxIJ, uyIJ;
 	int i,j,k;
+	int nxny = nx*ny;
 	
 		for (i = 0; i < nx; i++){
 			for (j = 0; j < ny; j++){
-				uxIJ = ux[i][j];
-				uyIJ = uy[i][j];
-				rhoIJ = rho[i][j];
+				uxIJ = ux[ny*i + j];
+				uyIJ = uy[ny*i + j];
+				rhoIJ = rho[ny*i + j];
 				uSq = 1.5*(uxIJ*uxIJ+uyIJ*uyIJ);
 				for (k = 0; k < nf; k++){
 			u = 3.0*(ex[k]*uxIJ + ey[k]*uyIJ);
-			fEq = rhoIJ*w[k]*(1+u+0.5*u*u-uSq);
-			fOut[k][i][j] = fIn[k][i][j]-tau*(fIn[k][i][j]-fEq);
+			fEq = rhoIJ*w[k]*(1.0+u+0.5*u*u-uSq);
+			fOut[nxny*k + ny*i + j] = fIn[nxny*k + ny*i + j]-tau*(fIn[nxny*k + ny*i + j]-fEq);
 			}
 		}
 	}			 
 }
 
-void bounce(double*** fIn, double*** fOut,int nx,int ny,int nf, int** bbCells, int nBBcells, int* opposite){
+void bounce(double* fIn, double* fOut,int nx,int ny,int nf, int* bbCells, int nBBcells, int* opposite){
 	int i,j,k,l;
 	
 	//Obstacle
 	for (l = 0; l < nBBcells; l++) {
 		for (k = 0; k < nf; k++){
-				i = bbCells[0][l];
-				j = bbCells[1][l];
-				fOut[k][i][j] = fIn[opposite[k]][i][j];
+				i = bbCells[l];
+				j = bbCells[1*nBBcells+l];
+				fOut[nx*ny*k + ny*i + j] = fIn[nx*ny*opposite[k] + ny*i + j];
 		}
 	}
 	
 	//Top/Bottow wall
 	for (i = 0; i < nx; i++) {
 		for (k = 0; k < nf; k++){
-			fOut[k][i][0] = fIn[opposite[k]][i][0];
-			fOut[k][i][ny-1] = fIn[opposite[k]][i][ny-1];
+			fOut[k*nx*ny + ny*i] = fIn[nx*ny*opposite[k] + ny*i];
+			fOut[k*nx*ny +i*ny+ny-1] = fIn[nx*ny*opposite[k] + ny*i + ny-1];
 		}
 	}
 }
 
-void stream(double*** fIn, double*** fOut,int* ex,int* ey, int nx, int ny, int nf) {
+void stream(double* fIn, double* fOut,int* ex,int* ey, int nx, int ny, int nf) {
 	//Ugly solution. Improve?
 	int i,j,k;
-
+	int nxny = nx*ny;
 	//Interior
 	for (i = 1; i < nx-1; i++) {
 		for (j = 1; j < ny-1; j++) {
 			for (k = 0; k < nf; k++) {
-				fIn[k][i][j] = fOut[k][i-ex[k]][j-ey[k]];
+				fIn[nxny*k+ny*i+j] = fOut[k*nxny+(i-ex[k])*ny +j-ey[k]];
 			}
 		}
 	}	
@@ -269,74 +246,74 @@ void stream(double*** fIn, double*** fOut,int* ex,int* ey, int nx, int ny, int n
 	//Outlet
 	for (j = 1; j < ny-1; j++) {
 		for (k = 0; k < nf; k++) {
-			if (ex[k]==-1) fIn[k][nx-1][j] = fOut[k][0][j-ey[k]];
-			else fIn[k][nx-1][j] = fOut[k][nx-1-ex[k]][j-ey[k]];
+			if (ex[k]==-1) fIn[k*nxny+(nx-1)*ny+j] = fOut[k*nxny+j-ey[k]];
+			else fIn[k*nxny+(nx-1)*ny+j] = fOut[k*nxny + (nx-1-ex[k])*ny+j-ey[k]];
 		}
 	}
 	//Inlet
 	for (j = 1; j < ny-1; j++) {
 		for (k = 0; k < nf; k++) {
-			if (ex[k]==1) fIn[k][0][j] = fOut[k][nx-1][j-ey[k]];
-			else fIn[k][0][j] = fOut[k][-ex[k]][j-ey[k]];
+			if (ex[k]==1) fIn[k*nxny +j] = fOut[k*nxny+(nx-1)*ny+j-ey[k]];
+			else fIn[k*nxny +j] = fOut[k*nxny-ex[k]*ny+j-ey[k]];
 		}
 	}
 	//Top wall
 	for (i = 1; i < nx-1; i++) {
 		for (k = 0; k < nf; k++) {
-			if (ey[k]==-1) fIn[k][i][ny-1] = fOut[k][i-ex[k]][0];
-			else fIn[k][i][ny-1] = fOut[k][i-ex[k]][ny-1-ey[k]];
+			if (ey[k]==-1) fIn[k*nxny +i*ny + ny-1] = fOut[k*nxny +(i-ex[k])*ny];
+			else fIn[k*nxny +i*ny + ny-1] = fOut[k*nxny +(i-ex[k])*ny +ny-1-ey[k]];
 		}
 	}
 	//Bottom wall
 	for (i = 1; i < nx-1; i++) {
 		for (k = 0; k < nf; k++) {
-			if (ey[k]==1) fIn[k][i][0] = fOut[k][i-ex[k]][ny-1];
-			else fIn[k][i][0] = fOut[k][i-ex[k]][-ey[k]];
+			if (ey[k]==1) fIn[k*nxny+ny*i] = fOut[k*nxny +(i-ex[k])*ny+ny-1];
+			else fIn[k*nxny + ny*i] = fOut[k*nxny + (i-ex[k])*ny-ey[k]];
 		}
 	}
 	//Top right corner
 	for (k = 0; k < nf; k++) {
 			if (ex[k]==-1){
-				if (ey[k]==-1) fIn[k][nx-1][ny-1] = fOut[k][0][0];
-				else fIn[k][nx-1][ny-1] = fOut[k][0][ny-1-ey[k]];
+				if (ey[k]==-1) fIn[k*nxny+(nx-1)*ny+ny-1] = fOut[k*nxny];
+				else fIn[k*nxny+(nx-1)*ny+ny-1] = fOut[k*nxny +ny-1-ey[k]];
 			}
-			else if (ey[k]==-1) fIn[k][nx-1][ny-1] = fOut[k][nx-1-ex[k]][0];
-			else fIn[k][nx-1][ny-1] = fOut[k][nx-1-ex[k]][ny-1-ey[k]];
+			else if (ey[k]==-1) fIn[k*nxny+(nx-1)*ny+ny-1] = fOut[k*nxny + (nx-1-ex[k])*ny];
+			else fIn[k*nxny+(nx-1)*ny+ny-1] = fOut[k*nxny + (nx-1-ex[k])*ny +ny-1-ey[k]];
 		}		
 	//Bottom right corner
 	for (k = 0; k < nf; k++) {
 			if (ex[k]==-1){
-				if (ey[k]==1) fIn[k][nx-1][0] = fOut[k][0][ny-1];
-				else fIn[k][nx-1][0] = fOut[k][0][-ey[k]];
+				if (ey[k]==1) fIn[k*nxny+(nx-1)*ny] = fOut[k*nxny + ny-1];
+				else fIn[k*nxny+(nx-1)*ny] = fOut[k*nxny-ey[k]];
 				}
-			else if (ey[k]==1) fIn[k][nx-1][0] = fOut[k][nx-1-ex[k]][ny-1];
-			else fIn[k][nx-1][0] = fOut[k][nx-1-ex[k]][-ey[k]];
+			else if (ey[k]==1) fIn[k*nxny+(nx-1)*ny] = fOut[k*nxny + (nx-1-ex[k])*ny + ny-1];
+			else fIn[k*nxny+(nx-1)*ny] = fOut[k*nxny + (nx-1-ex[k])*ny -ey[k]];
 		}	
 	//Top left corner
 	for (k = 0; k < nf; k++) {
 			if (ex[k]==1){
-				if (ey[k]==-1) fIn[k][0][ny-1] = fOut[k][nx-1][0];
-				else fIn[k][0][ny-1] = fOut[k][nx-1][ny-1-ey[k]];
+				if (ey[k]==-1) fIn[k*nxny+ ny-1] = fOut[k*nxny+(nx-1)*ny];
+				else fIn[k*nxny+ ny-1] = fOut[k*nxny+(nx-1)*ny+ny-1-ey[k]];
 			} 
-			else if (ey[k]==-1) fIn[k][0][ny-1] = fOut[k][-ex[k]][0];
-			else fIn[k][0][ny-1] = fOut[k][-ex[k]][ny-1-ey[k]];
+			else if (ey[k]==-1) fIn[k*nxny+ ny-1] = fOut[k*nxny -ex[k]*ny];
+			else fIn[k*nxny+ ny-1] = fOut[k*nxny -ex[k]*ny +ny-1-ey[k]];
 		}		
 	//Bottom left corner
 	for (k = 0; k < nf; k++) {
 			if (ex[k]==1){
-				if (ey[k]==1) fIn[k][0][0] = fOut[k][nx-1][ny-1];
-				else fIn[k][0][0] = fOut[k][nx-1][-ey[k]];
+				if (ey[k]==1) fIn[k*nxny] = fOut[k*nxny+(nx-1)*ny+ny-1];
+				else fIn[k*nxny] = fOut[k*nxny+(nx-1)*ny+-ey[k]];
 				}
-			else if (ey[k]==1) fIn[k][0][0] = fOut[k][-ex[k]][ny-1];
-			else fIn[k][0][0] = fOut[k][-ex[k]][-ey[k]];
+			else if (ey[k]==1) fIn[k*nxny] = fOut[k*nxny-ex[k]*ny+ny-1];
+			else fIn[k*nxny] = fOut[k*nxny-ex[k]*ny-ey[k]];
 		}
 }
 
-void csvWriteD(double** mat, int n, int m, char* path) {
+void csvWriteD(double* mat, int n, int m, char* path) {
 	FILE* fp = fopen(path,"w");
 	for (int i = 0; i < n; i++){
 		for (int j = 0; j < m; j++){
-		fprintf(fp,"%f", mat[i][j]);
+		fprintf(fp,"%20.20f", mat[m*i + j]);
 		if (j != m-1) fprintf(fp,",");
 		}
 	if (i != (n-1)) fprintf(fp,"\n");
@@ -344,11 +321,23 @@ void csvWriteD(double** mat, int n, int m, char* path) {
 	fclose(fp);
 }
 
-void csvWriteI(int** mat, int n, int m, char* path) {
+void csvWriteI(int* mat, int n, int m, char* path) {
 	FILE* fp = fopen(path,"w");
 	for (int i = 0; i < n; i++){
 		for (int j = 0; j < m; j++){
-		fprintf(fp,"%d", mat[i][j]);
+		fprintf(fp,"%d", mat[m*i + j]);
+		if (j != m-1) fprintf(fp,",");
+		}
+	if (i != (n-1)) fprintf(fp,"\n");
+	}
+	fclose(fp);
+}
+
+void csvWriteLayer(double* mat, int n, int m, int k, char* path) {
+		FILE* fp = fopen(path,"w");
+	for (int i = 0; i < n; i++){
+		for (int j = 0; j < m; j++){
+		fprintf(fp,"%20.20f", mat[k*n*m +m*i + j]);
 		if (j != m-1) fprintf(fp,",");
 		}
 	if (i != (n-1)) fprintf(fp,"\n");

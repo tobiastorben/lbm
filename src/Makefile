@@ -1,12 +1,12 @@
 IDIR =../include
 CC=gcc
-CFLAGS=-I$(IDIR) -ggdb -std=c99
+CFLAGS=-I$(IDIR) -std=c99 -m64 -Ofast -flto -march=native -funroll-loops
 
 ODIR=../obj
 LDIR =../lib
 
 
-LIBS=-lm
+LIBS=
 
 _DEPS = utilities.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))

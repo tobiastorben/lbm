@@ -3,7 +3,7 @@
 
 //Indexing: ux(i,j) = ux(x = i*h,y=j*h);
 
-int main(int argc, char* argv) {
+int main(int argc, char** argv) {
 	time_t t1,t2;
 	t1 = clock();
 	//Define grid
@@ -32,15 +32,15 @@ int main(int argc, char* argv) {
 	
 	//BC data
 	int nBBcells = 377;
-	int* bbCells = readObstacleData(nBBcells);//Array of indices to bounce back nodes
+	int** bbCells = readObstacleData(nBBcells);//Array of indices to bounce back nodes
 	
 	//ICs: Initialze flow as Poiseuille flow
 	double initialRho = 1;
-	double* rho = initRho(nx,ny,initialRho);
-	double* ux = initUx(nx,ny,uIn);
-	double* uy = initUy(nx,ny);
-	double* fIn = initFin(nf,nx,ny,ex,ey,ux,uy,w,rho);
-	double* fOut = initFout(nx,ny,nf);
+	double** rho = initRho(nx,ny,initialRho);
+	double** ux = initUx(nx,ny,uIn);
+	double** uy = initUy(nx,ny);
+	double*** fIn = initFin(nf,nx,ny,ex,ey,ux,uy,w,rho);
+	double*** fOut = initFout(nx,ny,nf);
 	
 	//Main loop. Marches flow in time
 	for (int i = 0; i < nIter; i++){	
@@ -65,8 +65,8 @@ int main(int argc, char* argv) {
 	csvWriteD(ux,nx,ny, "ux.csv");
 	csvWriteD(uy,nx,ny, "uy.csv");
 	csvWriteD(rho,nx,ny, "rho.csv");
-	csvWriteLayer(fIn,nx,ny, 6,"fin.csv");
-	csvWriteLayer(fOut,nx,ny, 6,"fout.csv");
+	csvWriteD(fIn[6],nx,ny, "fin.csv");
+	csvWriteD(fOut[6],nx,ny, "fout.csv");
 	return 0;
 }
 
