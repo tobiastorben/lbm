@@ -1,7 +1,8 @@
 //Main program
 #include "utilities.h"
-
-//Indexing: ux(i,j) = ux(x = i*h,y=j*h);
+#include "initialization.h"
+#include "boundaries.h"
+#include "core.h"
 
 int main(int argc, char* argv) {
 	time_t t1,t2;

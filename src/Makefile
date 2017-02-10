@@ -8,10 +8,10 @@ LDIR =../lib
 
 LIBS=
 
-_DEPS = utilities.h
+_DEPS = utilities.h boundaries.h core.h initialization.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-_OBJ = lbm.o utilities.o
+_OBJ = lbm.o utilities.o boundaries.o core.o initialization.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 
