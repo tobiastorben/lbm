@@ -3,24 +3,35 @@
 #include "initialization.h"
 #include "boundaries.h"
 #include "core.h"
+#include "postProcessing.h"
+#include "inputParser.h"
 
-int main(int argc, char* argv) {
+int main(int argc, char* argv[]) {
+	//Time execution
 	time_t t1,t2;
 	t1 = clock();
-	//Define grid
-	int nx = 400;
-	int ny = 100;
 	
+	printf("Initializing...\n");
+	
+	char* inPath = malloc(1000);char* obstaclePath = malloc(1000); char* outDir = malloc(1000);
+	double Re,L; int nIter,cyclesPerWrite,startWrite,nx,ny,nBBcells;
+	int outputSelect[] = {0,0,0,0,0};
+	
+	if (argc == 2) inPath = argv[1];
+	else strcpy(inPath,"..\\input\\input.in");
+		
+	if (parseInput(inPath,obstaclePath,&Re,&L,&nIter,&cyclesPerWrite,&startWrite,outputSelect, outDir)) {
+		error("Invalid simulation parameters. Exiting.");
+	}
+
+	//Read geometry and set dimensions
+	int* bbCellMat = readObstacle(&nBBcells,&nx,&ny,obstaclePath);//Read obstacle data from file
+	int* bbCells = mapObstacleCells(bbCellMat,nBBcells,nx,ny);//Array of indices to bounce back nodes
+
 	//Define flow parameters
 	double uIn = 0.1;
-	double Re = 100;
 	double nu = uIn*2*(ny/10 +1)/Re;
 	double tau = 1/(3*nu+0.5);//Relaxation parameter of BGK collision operator
-	
-	//Define simulations parameters
-	int nIter = 500;
-	int cyclesPerWrite = 5;
-	
 	
 	//D2Q9 lattice constants
 	int nf = 9;
@@ -31,10 +42,6 @@ int main(int argc, char* argv) {
 	int eyI[] = {0,0,1,0,-1,1,1,-1,-1};//int version for indexing
 	int opposite[] = {0,3,4,1,2,7,8,5,6};//Index of opposite vector in lattice
 	
-	//BC data
-	int nBBcells = 377;
-	int* bbCells = readObstacleData(nBBcells);//Array of indices to bounce back nodes
-	
 	//ICs: Initialze flow as Poiseuille flow
 	double initialRho = 1;
 	double* rho = initRho(nx,ny,initialRho);
@@ -43,9 +50,12 @@ int main(int argc, char* argv) {
 	double* fIn = initFin(nf,nx,ny,ex,ey,ux,uy,w,rho);
 	double* fOut = initFout(nx,ny,nf);
 
+
 	
 	//Main loop. Marches flow in time
-	for (int i = 0; i < nIter; i++){	
+	int iter; double progression;
+	printf("Solving flow:  ");
+	for (iter = 0; iter < nIter; iter++){	
 		//Update macroscopic variables	
 		updateRho(rho,fIn,nx,ny,nf);		
 		updateU(ux,uy,fIn,rho,ex,ey,nx,ny,nf);
@@ -60,18 +70,24 @@ int main(int argc, char* argv) {
 		
 		//Streaming
 		stream(fIn,fOut,exI,eyI,nx,ny,nf);
+		
+		//Write results and progression
+		if (iter >= startWrite && iter % cyclesPerWrite == 0) {
+			writeResults(ux,uy,rho,nx,ny,bbCells,bbCellMat,nBBcells,iter,outDir,outputSelect);
+		}
+		progression = 100*iter/nIter;
+		printf("%2.0f%%\b\b\b", progression);
+		fflush(stdout);
 
 	}
+	printf("\nDone!\n");
 	t2 = clock();
-	printf("Time spent: %f s\n", ((float) t2-(float) t1)/1000.0);
-	csvWriteD(ux,nx,ny, "ux.csv");
-	csvWriteD(uy,nx,ny, "uy.csv");
-	csvWriteD(rho,nx,ny, "rho.csv");
-	csvWriteLayer(fIn,nx,ny, 6,"fin.csv");
-	csvWriteLayer(fOut,nx,ny, 6,"fout.csv");
+	printf("Elapsed time: %f s\n", ((float) t2-(float) t1)/1000.0);
+	int allSel[] = {1,1,1,1,1};
+	writeResults(ux,uy,rho,nx,ny,bbCells,bbCellMat,nBBcells,iter,outDir,allSel);
+	printf("Results written to: %s\n", outDir);
 	return 0;
 }
-
 
 
 

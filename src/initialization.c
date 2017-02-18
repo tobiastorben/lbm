@@ -1,31 +1,66 @@
 #include "initialization.h"
 
-//Reads geometry of bounce back cells from a file, stores it in a vector
-//of indices
-int* readObstacleData(int nBBcells) {
-	FILE* fp = fopen("obstacle.mask","r");
-	char* line = malloc(nBBcells*100);		
-	char* token;
-	int* bbCells = malloc(2*nBBcells*sizeof(int));
+int* mapObstacleCells(int* bbCellMat,int nBBcells, int nx, int ny) {
 	int i = 0;
 	int j = 0;
 	int k = 0;
+	int* bbCells = malloc(2*nBBcells*sizeof(int));
+	for (i = 0; i < nx; i++){
+		for (j = 0; j < ny; j++){    
+			if (bbCellMat[i*ny + j]) {
+				bbCells[k] = i;
+				bbCells[1*nBBcells+k] = j;
+				k++;
+			}
+	    }
+	}
+	return bbCells;
+}
+
+int* readObstacle(int* nBBCells_p, int* nx_p, int* ny_p, char* path) {
+	FILE* fp = fopen(path,"r");
+	char* line = malloc(10000);		
+	char* token;
+	int i = 0;
+	int j;
+	int nBBCells = 0;
+	
+	//Traverse file one to determine the dimensions of the grid
 	while (!feof(fp)){
-		fgets(line,nBBcells*100,fp);
+		fgets(line,10000,fp);
 		token = strtok(line, ",");		
-		int j = 0;
+		j = 0;
 		while( token != NULL ){ 	    
-		if (atoi(token)) {
-			bbCells[k] = i;
-			bbCells[1*nBBcells+k] = j;
-			k++;
+		token = strtok(NULL, ",");
+		j++;
+	    }
+		i++;
+	}
+	*nx_p = i;
+	*ny_p = j;
+	fclose(fp);
+	
+	//Read data into matrix
+	int* bbCellMat = calloc((*nx_p)*(*ny_p),sizeof(int));
+	fp = fopen(path,"r");
+	i = 0;
+	while (!feof(fp)){
+		fgets(line,10000,fp);
+		token = strtok(line, ",");		
+		j = 0;
+		while( token != NULL ){ 	    
+		if (atoi(token) == 1) {
+			bbCellMat[i*(*ny_p) + j] = 1;
+			nBBCells++;
 		}
 		token = strtok(NULL, ",");
 		j++;
 	    }
-	i++;
+		i++;
 	}
-	return bbCells;
+	*nBBCells_p = nBBCells;
+	free(line);
+	return bbCellMat;
 }
 
 double* initUx(int nx,int ny,double uIn) {

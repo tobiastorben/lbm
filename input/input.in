@@ -1,0 +1,29 @@
+%This is a template for an input file. The parser is case- and white space sensitive
+%The path to this file can be given as a command line argument. The default path is "../input/input.in".
+%All simulation parameters below must be set to run the program. The order is arbitraty. "%" for comments
+
+%Path to obstacle file
+obstaclePath=..\obstacleMasks\obstacleCyl.mask
+
+%Reynold number
+Re=100
+
+%Characteristic length (For Reynolds number)
+L=22;
+
+%Number of interations
+nIter=500
+
+%Number of iterations between each result write
+cyclesPerWrite=500
+
+%Number of iteration before result writing starts
+startWrite=100
+
+%Results to be written (NB! Frequent writing of field variables will slow down the execution considerably)
+%Availiable options: X-velocity (ux), Y-velocity (uy), Pressure (p), Vorticity (omega), Lift and Drag (F)
+%The final value for all variables will always be written
+outputSelect=ux,uy
+
+%Output directory (Default: ..\res\)
+%outDir=..\res
