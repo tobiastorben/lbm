@@ -7,34 +7,12 @@
 #include "inputParser.h"
 
 int main(int argc, char* argv[]) {
-	//Time execution
+	
 	time_t t1,t2;
-	t1 = clock();
-	
-	printf("Initializing...\n");
-	
-	char* inPath = malloc(1000);char* obstaclePath = malloc(1000); char* outDir = malloc(1000);
-	double Re,L; int nIter,cyclesPerWrite,startWrite,nx,ny,nBBcells;
-	int outputSelect[] = {0,0,0,0,0};
-	
-	if (argc == 2) inPath = argv[1];
-	else strcpy(inPath,"..\\input\\input.in");
+	double Re,u0,u0Phys,dxPhys,dtPhys,nuPhys,tau,initialRho,progression,*rho,*ux,*uy,*fIn,*fOut;
+	int nIter,cyclesPerWrite,startWrite,nx,ny,nf,nBBcells,iter,*bbCellMat,*bbCells;
 		
-	if (parseInput(inPath,obstaclePath,&Re,&L,&nIter,&cyclesPerWrite,&startWrite,outputSelect, outDir)) {
-		error("Invalid simulation parameters. Exiting.");
-	}
-
-	//Read geometry and set dimensions
-	int* bbCellMat = readObstacle(&nBBcells,&nx,&ny,obstaclePath);//Read obstacle data from file
-	int* bbCells = mapObstacleCells(bbCellMat,nBBcells,nx,ny);//Array of indices to bounce back nodes
-
-	//Define flow parameters
-	double uIn = 0.1;
-	double nu = uIn*2*(ny/10 +1)/Re;
-	double tau = 1/(3*nu+0.5);//Relaxation parameter of BGK collision operator
-	
 	//D2Q9 lattice constants
-	int nf = 9;
 	double w[] = {4.0/9, 1.0/9, 1.0/9, 1.0/9, 1.0/9, 1.0/36, 1.0/36, 1.0/36, 1.0/36};//Weights
 	double ex[] = {0,1.0,0,-1.0,0,1.0,-1.0,-1.0,1.0};//x component of lattice vectors 
 	double ey[] = {0,0,1.0,0,-1.0,1.0,1.0,-1.0,-1.0};//y component of lattice vectors
@@ -42,18 +20,38 @@ int main(int argc, char* argv[]) {
 	int eyI[] = {0,0,1,0,-1,1,1,-1,-1};//int version for indexing
 	int opposite[] = {0,3,4,1,2,7,8,5,6};//Index of opposite vector in lattice
 	
+	char* inPath = malloc(1000);char* obstaclePath = malloc(1000); char* outDir = malloc(1000);
+	int outputSelect[] = {0,0,0,0,0};int outputSelectAll[] = {1,1,1,1,1};
+		
+	printf("Initializing...\n\n");
+
+	if (argc == 2) inPath = argv[1];
+	else strcpy(inPath,"..\\input\\input.in");
+		
+	if (parseInput(inPath,obstaclePath,&dxPhys,&dtPhys,&nuPhys,&u0Phys,&nIter,&cyclesPerWrite,&startWrite,outputSelect, outDir)) {
+		error("Invalid simulation parameters. Exiting.");
+	}
+
+	//Read geometry and set dimensions
+	bbCellMat = readObstacle(&nBBcells,&nx,&ny,obstaclePath);//Read obstacle data from file
+	bbCells = mapObstacleCells(bbCellMat,nBBcells,nx,ny);//Array of indices to bounce back nodes
+	
+	//Cast to non-dimensional form
+	nonDimensionalize(nx,ny,dtPhys,dxPhys,nuPhys,u0Phys,&u0,&tau);
+
 	//ICs: Initialze flow as Poiseuille flow
-	double initialRho = 1;
-	double* rho = initRho(nx,ny,initialRho);
-	double* ux = initUx(nx,ny,uIn);
-	double* uy = initUy(nx,ny);
-	double* fIn = initFin(nf,nx,ny,ex,ey,ux,uy,w,rho);
-	double* fOut = initFout(nx,ny,nf);
+	nf = 9;
+	initialRho = 1;
+	rho = initRho(nx,ny,initialRho);
+	ux = initUx(nx,ny,u0);
+	uy = initUy(nx,ny);
+	fIn = initFin(nf,nx,ny,ex,ey,ux,uy,w,rho);
+	fOut = initFout(nx,ny,nf);
 
-
+	//Time execution
+	t1 = clock();
 	
 	//Main loop. Marches flow in time
-	int iter; double progression;
 	printf("Solving flow:  ");
 	for (iter = 0; iter < nIter; iter++){	
 		//Update macroscopic variables	
@@ -61,7 +59,7 @@ int main(int argc, char* argv[]) {
 		updateU(ux,uy,fIn,rho,ex,ey,nx,ny,nf);
 		
 		//Apply BCs
-		inlet(ux,uy,rho,fIn,uIn,nx,ny);//Poiseuille (Zou/He)		
+		inlet(ux,uy,rho,fIn,u0,nx,ny);//Poiseuille (Zou/He)		
 		outlet(ux,uy,rho,fIn,nx,ny);//Constant pressure (Zou/He)
 		
 		//Collide (Bhatnagar-Gross-Kroot model)
@@ -80,11 +78,9 @@ int main(int argc, char* argv[]) {
 		fflush(stdout);
 
 	}
-	printf("\nDone!\n");
 	t2 = clock();
-	printf("Elapsed time: %f s\n", ((float) t2-(float) t1)/1000.0);
-	int allSel[] = {1,1,1,1,1};
-	writeResults(ux,uy,rho,nx,ny,bbCells,bbCellMat,nBBcells,iter,outDir,allSel);
+	printf("100%%\n\nElapsed time: %f s\n\n", ((float) t2-(float) t1)/1000.0);
+	writeResults(ux,uy,rho,nx,ny,bbCells,bbCellMat,nBBcells,iter,outDir,outputSelectAll);
 	printf("Results written to: %s\n", outDir);
 	return 0;
 }

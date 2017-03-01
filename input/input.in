@@ -5,20 +5,26 @@
 %Path to obstacle file
 obstaclePath=..\obstacleMasks\obstacleCyl.mask
 
-%Reynold number
-Re=100
+%Spatial discretization step
+dx=0.01
 
-%Characteristic length (For Reynolds number)
-L=22;
+%Time step
+dt=0.01
+
+%Fluid viscosity
+viscosity=0.0002
+
+%Inlet velocity
+inletVel=0.1
 
 %Number of interations
-nIter=500
+nIter=5000
 
 %Number of iterations between each result write
 cyclesPerWrite=500
 
 %Number of iteration before result writing starts
-startWrite=100
+startWrite=1000000
 
 %Results to be written (NB! Frequent writing of field variables will slow down the execution considerably)
 %Availiable options: X-velocity (ux), Y-velocity (uy), Pressure (p), Vorticity (omega), Lift and Drag (F)

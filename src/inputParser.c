@@ -1,6 +1,6 @@
 #include "inputParser.h"
 
-int parseInput(char* path, char* obstaclePath, double* Re_p, double* L_p, int* nIter_p, int* cyclesPerWrite_p, int* startWrite_p, int* outputSelect, char* outDir) {
+int parseInput(char* path, char* obstaclePath, double* dx_p, double* dt_p, double* nu_p, double* u0_p, int* nIter_p, int* cyclesPerWrite_p, int* startWrite_p, int* outputSelect, char* outDir) {
 	FILE* fp = fopen(path,"r");
 	char* line = malloc(1000);
 	char* token;
@@ -18,13 +18,23 @@ int parseInput(char* path, char* obstaclePath, double* Re_p, double* L_p, int* n
 			count++;
 		}
 				
-		else if(!strcmp(token,"Re")){
-			*Re_p = atof(strtok(NULL, "="));
+		else if(!strcmp(token,"dx")){
+			*dx_p = atof(strtok(NULL, "="));
 			count++;
 		}
 		
-		else if(!strcmp(token,"L")){
-			*L_p = atof(strtok(NULL, "="));
+		else if(!strcmp(token,"dt")){
+			*dt_p = atof(strtok(NULL, "="));
+			count++;
+		}
+		
+		else if(!strcmp(token,"viscosity")){
+			*nu_p = atof(strtok(NULL, "="));
+			count++;
+		}
+		
+		else if(!strcmp(token,"inletVel")){
+			*u0_p = atof(strtok(NULL, "="));
 			count++;
 		}
 		
@@ -73,5 +83,5 @@ int parseInput(char* path, char* obstaclePath, double* Re_p, double* L_p, int* n
 	}
 	if (!outDirIsSet) strcpy(outDir,"..\\res");
 	free(line);
-	return !(count >= 6);
+	return !(count == 8);
 }

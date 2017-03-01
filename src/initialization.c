@@ -121,3 +121,24 @@ double* initRho(int nx, int ny, double initialRho) {
 		}
 	return rho;
 }
+
+void nonDimensionalize(int nx, int ny, double dtPhys, double dxPhys, double nuPhys, double u0Phys, double* u0_p, double* tau_p) {
+	double width,Re,t0,dx,dt,nu;
+	
+	width = dxPhys*ny;
+	t0 = width/u0Phys;
+	Re = width*u0Phys/nuPhys;
+	dx = 1.0/ny;
+	dt = dtPhys/t0;
+	*u0_p = dt/dx;
+	nu = dt/(dx*dx*Re);
+	*tau_p = 3.0*nu + 0.5;
+	
+	printf("Numerical simulation parameters:\n");
+	printf("Reynolds number (based on channel width): %.1f\n", Re);
+	printf("Lattice Mach number: %.3f\n", *u0_p*sqrt(3.0));
+	printf("Speed/Accuracy ratio: %.2f\n", dt/(dx*dx));
+	printf("Relaxation time: %.2f\n\n", *tau_p);
+	
+	return;
+}

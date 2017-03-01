@@ -48,7 +48,7 @@ void collide(double* ux, double* uy, double*fIn, double* fOut, double* rho, doub
 				for (k = 0; k < nf; k++){
 			u = 3.0*(ex[k]*uxIJ + ey[k]*uyIJ);
 			fEq = rhoIJ*w[k]*(1.0+u+0.5*u*u-uSq);
-			fOut[nxny*k + ny*i + j] = fIn[nxny*k + ny*i + j]-tau*(fIn[nxny*k + ny*i + j]-fEq);
+			fOut[nxny*k + ny*i + j] = fIn[nxny*k + ny*i + j]-(fIn[nxny*k + ny*i + j]-fEq)/tau;
 			}
 		}
 	}			 

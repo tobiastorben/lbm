@@ -1,0 +1,4 @@
+Organize variable in structs
+Visualize with OpenGL
+Parallellize with pthreads
+More complex and general BC's
