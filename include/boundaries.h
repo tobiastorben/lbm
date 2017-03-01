@@ -1,3 +1,10 @@
-void inlet(double* ux, double* uy, double* rho, double* fIn, double uIn, int nx, int ny);
-void outlet(double* ux, double* uy, double* rho, double* fIn, int nx, int ny);
-void bounce(double* fIn, double* fOut,int nx,int ny,int nf, int* bbCells, int nBBcells, int* opposite);
+#ifndef BOUNDARIES_H
+#define BOUNDARIES_H
+
+#include "lbm.h"
+
+void inlet(FlowData* flow, LatticeConsts* lc, SimParams* params);
+void outlet(FlowData* flow, LatticeConsts* lc);
+void bounce(FlowData* flow, LatticeConsts* lc, SimParams* params);
+
+#endif

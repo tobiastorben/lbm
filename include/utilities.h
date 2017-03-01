@@ -1,3 +1,6 @@
+#ifndef UTILITIES_H
+#define UTILITIES_H
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -15,3 +18,5 @@ void error(char* reason);
 void writeResults(double* ux, double* uy, double* rho,int nx,int ny, int* bbCells, int* bbCellMat, int nBBcells, int iter, char* outDir,  int* outputSelect);
 void csvWriteOmega(double* ux, double* uy, int n, int m, char* path);
 void csvWritePres(double* rho, int n, int m, char* path);
+
+#endif

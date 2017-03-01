@@ -1,8 +1,11 @@
 #include "inputParser.h"
 
-int parseInput(char* path, char* obstaclePath, double* dx_p, double* dt_p, double* nu_p, double* u0_p, int* nIter_p, int* cyclesPerWrite_p, int* startWrite_p, int* outputSelect, char* outDir) {
-	FILE* fp = fopen(path,"r");
-	char* line = malloc(1000);
+int parseInput(char* inPath, SimParams* params) {
+	FILE* fp = fopen(inPath,"r");
+	char* line =  (char*) malloc(1000);
+	params->obstaclePath = (char*) malloc(1000);
+	params->outDir = (char*) malloc(1000);
+	int outputSelect[] = {0,0,0,0,0};
 	char* token;
 	int count = 0;
 	int outDirIsSet = 0;
@@ -14,47 +17,47 @@ int parseInput(char* path, char* obstaclePath, double* dx_p, double* dt_p, doubl
 			continue;
 		}
 		else if(!strcmp(token,"obstaclePath")){
-		strcpy(obstaclePath,strtok(strtok(NULL, "="),(NULL, "\r")));
+		strcpy(params->obstaclePath,strtok(strtok(NULL, "="),(NULL, "\r")));		
 			count++;
 		}
 				
 		else if(!strcmp(token,"dx")){
-			*dx_p = atof(strtok(NULL, "="));
+			params->dxPhys = atof(strtok(NULL, "="));
 			count++;
 		}
 		
 		else if(!strcmp(token,"dt")){
-			*dt_p = atof(strtok(NULL, "="));
+			params->dtPhys = atof(strtok(NULL, "="));
 			count++;
 		}
 		
 		else if(!strcmp(token,"viscosity")){
-			*nu_p = atof(strtok(NULL, "="));
+			params->nuPhys = atof(strtok(NULL, "="));
 			count++;
 		}
 		
 		else if(!strcmp(token,"inletVel")){
-			*u0_p = atof(strtok(NULL, "="));
+			params->u0Phys= atof(strtok(NULL, "="));
 			count++;
 		}
 		
 		else if(!strcmp(token,"nIter")){
-			*nIter_p = atoi(strtok(NULL, "="));
+			params->nIter = atoi(strtok(NULL, "="));
 			count++;
 		}
 		
 		else if(!strcmp(token,"cyclesPerWrite")){
-			*cyclesPerWrite_p = atoi(strtok(NULL, "="));
+			params->cyclesPerWrite = atoi(strtok(NULL, "="));
 			count++;
 		}
 		
 		else if(!strcmp(token,"startWrite")){
-			*startWrite_p = atoi(strtok(NULL, "="));
+			params->startWrite = atoi(strtok(NULL, "="));
 			count++;
 		}
 		
 		else if(!strcmp(token,"outDir")){
-			strcpy(outDir,strtok(strtok(NULL, "="),(NULL, "\r")));
+			strcpy(params->outDir,strtok(strtok(NULL, "="),(NULL, "\r")));
 			outDirIsSet = 1;
 		}
 				
@@ -81,7 +84,8 @@ int parseInput(char* path, char* obstaclePath, double* dx_p, double* dt_p, doubl
 		}
 		
 	}
-	if (!outDirIsSet) strcpy(outDir,"..\\res");
+	if (!outDirIsSet) strcpy(params->outDir,"..\\res");
+	memcpy(params->outputSelect,outputSelect, sizeof(outputSelect));
 	free(line);
 	return !(count == 8);
 }
