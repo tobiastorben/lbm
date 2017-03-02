@@ -1,5 +1,22 @@
 #include "core.h"
 
+void step(FlowData* flow, LatticeConsts* lc, SimParams* params) {
+	//Update macroscopic variables	
+	updateRho(flow,lc);		
+	updateU(flow,lc);
+	
+	//Apply BCs
+	inlet(flow,lc,params);//Poiseuille (Zou/He)		
+	outlet(flow,lc);//Constant pressure (Zou/He)
+	
+	//Collide (Bhatnagar-Gross-Kroot model)
+	collide(flow,lc,params);//Particle-Particle collisions		
+	bounce(flow,lc,params);//Bounce-back collision with boundary
+	
+	//Streaming
+	stream(flow,lc);
+}
+
 void updateRho(FlowData* flow, LatticeConsts* lc) {
 	double sum;
 	int nx,ny;
@@ -18,23 +35,29 @@ void updateRho(FlowData* flow, LatticeConsts* lc) {
 }
 
 void updateU(FlowData* flow, LatticeConsts* lc){
-	double sumX, sumY;
+	double sumX, sumY,*fIn,*ex,*ey,*rho,*ux,*uy;
 	int nx,ny,nxny;
 	
 	nx = lc->nx;
 	ny = lc->ny;
-	nxny = nx*ny;	
-
+	nxny = nx*ny;
+	ex = lc->ex;
+	ey = lc->ey;
+	fIn = flow->fIn;
+	rho = flow->rho;
+	ux = flow->ux;
+	uy = flow->uy;
+	
 	for (int i = 0; i < nx; i++) {
 		for (int j = 0; j < ny; j++){
 			sumX = 0;
 			sumY = 0;
 			for (int k = 0; k < 9; k++) {
-				sumX += flow->fIn[nxny*k + ny*i + j]*lc->ex[k];
-				sumY += flow->fIn[nxny*k + ny*i + j]*lc->ey[k];
+				sumX += fIn[nxny*k + ny*i + j]*ex[k];
+				sumY += fIn[nxny*k + ny*i + j]*ey[k];
 			}
-			flow->ux[ny*i + j] = sumX/flow->rho[ny*i + j];
-			flow->uy[ny*i + j] = sumY/flow->rho[ny*i + j];
+			ux[ny*i + j] = sumX/rho[ny*i + j];
+			uy[ny*i + j] = sumY/rho[ny*i + j];
 		}
 	} 				 
 }
@@ -42,23 +65,32 @@ void updateU(FlowData* flow, LatticeConsts* lc){
 
 
 void collide(FlowData* flow, LatticeConsts* lc, SimParams* params){
-	double u, fEq, uSq,rhoIJ, uxIJ, uyIJ;
+	double u,fEq,uSq,rhoIJ,uxIJ,uyIJ,*ux,*uy,*ey,*ex,*fOut,*fIn,*rho,*w,tau;
 	int i,j,k,nx,ny, nxny;
 	
 	nx = lc->nx;
 	ny = lc->ny;
 	nxny = nx*ny;
+	ex = lc->ex;
+	ey = lc->ey;
+	fIn = flow->fIn;
+	fOut = flow->fOut;
+	rho = flow->rho;
+	ux = flow->ux;
+	uy = flow->uy;
+	w = lc->w;
+	tau = params->tau;
 	
 	for (i = 0; i < nx; i++){
 		for (j = 0; j < ny; j++){
-			uxIJ = flow->ux[ny*i + j];
-			uyIJ = flow->uy[ny*i + j];
-			rhoIJ = flow->rho[ny*i + j];
+			uxIJ = ux[ny*i + j];
+			uyIJ = uy[ny*i + j];
+			rhoIJ = rho[ny*i + j];
 			uSq = 1.5*(uxIJ*uxIJ+uyIJ*uyIJ);
 			for (k = 0; k < 9; k++){
-		u = 3.0*(lc->ex[k]*uxIJ + lc->ey[k]*uyIJ);
-		fEq = rhoIJ*(lc->w[k])*(1.0+u+0.5*u*u-uSq);
-		flow->fOut[nxny*k + ny*i + j] = flow->fIn[nxny*k + ny*i + j]-(flow->fIn[nxny*k + ny*i + j]-fEq)/params->tau;
+		u = 3.0*(ex[k]*uxIJ + ey[k]*uyIJ);
+		fEq = rhoIJ*(w[k])*(1.0+u+0.5*u*u-uSq);
+		fOut[nxny*k + ny*i + j] = fIn[nxny*k + ny*i + j]-(fIn[nxny*k + ny*i + j]-fEq)/tau;
 		}
 	}
 	}			 
@@ -67,7 +99,6 @@ void collide(FlowData* flow, LatticeConsts* lc, SimParams* params){
 
 
 void stream(FlowData* flow, LatticeConsts* lc) {
-	//Ugly solution. Improve?
 	int i,j,k,nx,ny,nxny,*ex,*ey;
 	double *fIn,*fOut;
 	

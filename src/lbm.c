@@ -2,10 +2,8 @@
 #include "lbm.h"
 #include "utilities.h"
 #include "initialization.h"
-#include "boundaries.h"
 #include "core.h"
-#include "postProcessing.h"
-#include "inputParser.h"
+
 
 int main(int argc, char* argv[]) {	
 	SimParams params;
@@ -15,13 +13,15 @@ int main(int argc, char* argv[]) {
 	double progression;
 	int iter;
 	char* inPath;
-
+	
+	//Parse input file
 	if (argc == 2) inPath = argv[1];
 	else {
 		inPath = (char*) malloc(100);
 		strcpy(inPath,"..\\input\\input.in");
 	}
 	
+	//Initialize simulation
 	initialize(&flow,&params,&lc,inPath);
 
 	//Time execution
@@ -29,29 +29,17 @@ int main(int argc, char* argv[]) {
 	
 	//Main loop. Marches flow in time
 	printf("Solving flow:  ");
-	for (iter = 0; iter < params.nIter; iter++){
-		//Update macroscopic variables	
-		updateRho(&flow,&lc);		
-		updateU(&flow,&lc);
+	for (iter = 0; iter < params.nIter; iter++){		
+		//Do one time step
+		step(&flow,&lc,&params);
 		
-		//Apply BCs
-		inlet(&flow,&lc,&params);//Poiseuille (Zou/He)		
-		outlet(&flow,&lc);//Constant pressure (Zou/He)
-		
-		//Collide (Bhatnagar-Gross-Kroot model)
-		collide(&flow,&lc,&params);//Particle-Particle collisions		
-		bounce(&flow,&lc,&params);//Bounce-back collision with boundary
-		
-		//Streaming
-		stream(&flow,&lc);
-		
-		//Write results and progression
-		if (iter >= (params.startWrite) && iter % (params.cyclesPerWrite) == 0) {
-			writeResults(&flow, &lc, &params, iter);
+		/*//Write results to file
+		if (iter >= (params.startWrite) && iter % (params.cyclesPerWrite) == 0) {//TODO : OPTIMIZE!!
+		writeResults(&flow, &lc, &params, iter);
 		}
-		progression = 100*iter/(params.nIter);
-		printf("%2.0f%%\b\b\b", progression);
-		fflush(stdout);
+				
+		//Print progression to console
+		printProgression(iter,params.nIter);*/
 	}
 	t2 = clock();
 	printf("100%%\n\nElapsed time: %f.2 s\n\n", ((float) t2-(float) t1)/1000.0);

@@ -5,8 +5,7 @@ void inlet(FlowData* flow, LatticeConsts* lc, SimParams* params) {
 	int nx,ny;
 	
 	nx = lc->nx;
-	ny = lc->ny;
-	
+	ny = lc->ny;	
 	ux = flow->ux;
 	uy = flow->uy;
 	fIn = flow->fIn;
@@ -36,8 +35,7 @@ void outlet(FlowData* flow, LatticeConsts* lc) {
 	int nx,ny;
 	
 	nx = lc->nx;
-	ny = lc->ny;
-	
+	ny = lc->ny;	
 	fIn = flow->fIn;
 	ux = flow->ux;
 	uy = flow->uy;

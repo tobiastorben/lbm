@@ -2,7 +2,7 @@
 
 void mapObstacleCells(LatticeConsts* lc, SimParams* params) {
 	int i,j,k;
-	int* bbCells = malloc(2*(params->nBBcells)*sizeof(int));
+	int* bbCells = (int*) malloc(2*(params->nBBcells)*sizeof(int));
 	k = 0;
 	for (i = 0; i < lc->nx; i++){
 		for (j = 0; j < lc->ny; j++){    
@@ -19,7 +19,7 @@ void readObstacle(LatticeConsts* lc, SimParams* params) {
 	FILE* fp = fopen(params->obstaclePath,"r");
 	char* line = malloc(1000);		
 	char* token;
-	int i,j,nBBCells;
+	int i,j,nBBCells,*bbCellMat;
 	nBBCells=0;i=0;j = 0;
 	
 	//Traverse file once to determine the dimensions of the grid
@@ -36,7 +36,7 @@ void readObstacle(LatticeConsts* lc, SimParams* params) {
 	lc->nx = i;
 	lc->ny = j;
 	//Read data into matrix
-	int* bbCellMat = calloc((lc->nx)*(lc->ny),sizeof(int));
+	bbCellMat = calloc((lc->nx)*(lc->ny),sizeof(int));
 	fp = fopen(params->obstaclePath,"r");
 	i = 0;
 	while (!feof(fp)){

@@ -158,3 +158,10 @@ void writeResults(FlowData* flow, LatticeConsts* lc, SimParams* params,int iter)
 	free(path);
 	return;
 }
+
+void printProgression(int iter, int nIter) {
+	double progression;
+	progression = 100*iter/nIter;
+	printf("%2.0f%%\b\b\b", progression);
+	fflush(stdout);
+}

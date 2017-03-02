@@ -19,5 +19,6 @@ void writeTimeSeries(double* v, int n, char* path);
 void writeResults(FlowData* flow, LatticeConsts* lc, SimParams* params, int iter);
 void csvWriteOmega(double* ux, double* uy, int n, int m, char* path);
 void csvWritePres(double* rho, int n, int m, char* path);
+void printProgression(int iter, int nIter);
 
 #endif
