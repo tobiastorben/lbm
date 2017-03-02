@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include "postProcessing.h"
+#include "lbm.h"
 
 void printVecD(double* vec, int n);
 void printVecI(int* vec, int n);
@@ -14,8 +16,7 @@ void csvWriteD(double* mat, int n, int m, char* path);
 void csvWriteI(int* mat, int n, int m, char* path);
 void csvWriteLayer(double* mat, int n, int m, int k, char* path);
 void writeTimeSeries(double* v, int n, char* path);
-void error(char* reason);
-void writeResults(double* ux, double* uy, double* rho,int nx,int ny, int* bbCells, int* bbCellMat, int nBBcells, int iter, char* outDir,  int* outputSelect);
+void writeResults(FlowData* flow, LatticeConsts* lc, SimParams* params, int iter);
 void csvWriteOmega(double* ux, double* uy, int n, int m, char* path);
 void csvWritePres(double* rho, int n, int m, char* path);
 

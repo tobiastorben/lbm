@@ -1,12 +1,15 @@
 #include "postProcessing.h"
 
-double* calcF(double* F, double* rho, int nx, int ny, int* bbCells, int nBBcells, int* bbCellMat) {
-	double lift = 0;
-	double drag = 0;
-	double p;
-	F[0] = 0;
-	F[1] = 0;
-	int i,j,k;
+double* calcF(FlowData* flow, LatticeConsts* lc, SimParams* params) {
+	double p,*rho,*F;
+	int i,j,k,ny,*bbCells,*bbCellMat,nBBcells;
+	ny = lc->ny;
+	rho = flow->rho;
+	bbCells = params->bbCells;
+	bbCellMat = params->bbCellMat;
+	nBBcells = params->nBBcells;
+	F = calloc(2,sizeof(double));
+
 	for (k = 0; k < nBBcells; k++) {
 		i = bbCells[k];
 		j = bbCells[1*nBBcells +k];

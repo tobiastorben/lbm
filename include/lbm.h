@@ -14,10 +14,9 @@ typedef struct {
 } LatticeConsts;
 
 typedef struct {
-	int nIter,cyclesPerWrite,startWrite,nBBcells,*bbCellMat,*bbCells;
+	int nIter,cyclesPerWrite,startWrite,nBBcells,*bbCellMat,*bbCells,*outputSelect;
 	double u0,u0Phys,dxPhys,dtPhys,nuPhys,tau;
 	char* outDir, *obstaclePath;
-	int outputSelect[5];
 } SimParams;
 
 typedef struct {

@@ -1,5 +1,4 @@
 #include "utilities.h"
-#include "postProcessing.h"
 
 void printVecD(double* vec, int n) {
 	for (int i = 0; i < n; i++){
@@ -104,17 +103,22 @@ void csvWriteOmega(double* ux, double* uy, int n, int m, char* path) {
 	}
 	fclose(fp);
 }
-void error(char* reason) {
-	printf("ERROR! ");
-	printf(reason);
-	printf("\n");
-	exit(-1);
-}
 
-void writeResults(double* ux, double* uy, double* rho,int nx,int ny, int* bbCells, int* bbCellMat, int nBBcells, int iter, char* outDir,  int* outputSelect) {
-	char* fName = malloc(100);
-	char* path = malloc(100);
-	double F[2];
+void writeResults(FlowData* flow, LatticeConsts* lc, SimParams* params,int iter) {
+	double *F,*ux,*uy,*rho;
+	int nx,ny,*outputSelect;
+	char *fName,*path,*outDir;
+	
+	fName =  (char*) malloc(100);
+	path = (char*) malloc(100);
+	outDir = params->outDir;
+	nx = lc->nx;
+	ny = lc->ny;
+	ux = flow->ux;
+	uy = flow->uy;
+	rho = flow->rho;
+	outputSelect = params->outputSelect;
+	
 	if (outputSelect[0]) {
 		strcpy(path,outDir);
 		sprintf(fName,"\\ux%d.csv", iter);
@@ -147,7 +151,7 @@ void writeResults(double* ux, double* uy, double* rho,int nx,int ny, int* bbCell
 		strcpy(path,outDir);
 		strcpy(fName, "\\F.csv");
 		strcat(path,fName);
-		calcF(F,rho,nx,ny,bbCells,nBBcells,bbCellMat);
+		F = calcF(flow,lc,params);
 		writeTimeSeries(F,2,path);
 	}
 

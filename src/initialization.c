@@ -19,11 +19,10 @@ void readObstacle(LatticeConsts* lc, SimParams* params) {
 	FILE* fp = fopen(params->obstaclePath,"r");
 	char* line = malloc(1000);		
 	char* token;
-	int i,j;
-	int nBBCells = 0;
+	int i,j,nBBCells;
+	nBBCells=0;i=0;j = 0;
 	
-	//Traverse file one to determine the dimensions of the grid
-	i = 0;
+	//Traverse file once to determine the dimensions of the grid
 	while (!feof(fp)){
 		fgets(line,10000,fp);
 		token = strtok(line, ",");		
@@ -62,15 +61,14 @@ void readObstacle(LatticeConsts* lc, SimParams* params) {
 
 void initUx(LatticeConsts* lc, FlowData* flow, SimParams* params) {
 	int i,j,nx,ny;
-	double y,H;
+	double y,H,*ux;
 	
 	nx = lc->nx;
 	ny = lc->ny;
 	H = (double) lc->ny-2;
-	
-	
+		
 	//Initialize ux as Poiseuille flow
-	double* ux = malloc(nx*ny * sizeof(double));
+	ux = (double*) malloc(nx*ny * sizeof(double));
 	for (i = 0; i < lc->nx; i++){
 		for (j = 0; j < lc->ny; j++) {
 			y = j-0.5;//Change??
@@ -89,7 +87,7 @@ void initFin(LatticeConsts* lc, FlowData* flow) {
 	ux = flow->ux;
 	uy = flow->uy;
 	//Allocate three dimensional array. Indexed as: [f*nx*ny+(nx-1)*ny+ny]
-	fIn = malloc(nx*ny*9* sizeof(double));
+	fIn = (double*) malloc(nx*ny*9* sizeof(double));
 	
 	//Initialize particle distribution as equilibrium distrubution for
 	//for a Poiseuille flow
@@ -97,7 +95,7 @@ void initFin(LatticeConsts* lc, FlowData* flow) {
 		for (i = 0; i < lc->nx; i++){
 			for (j = 0; j < lc->ny; j++){
 			u = 3.0*((lc->ex[k])*ux[ny*i + j] + (lc->ey[k])*uy[ny*i + j]);
-			fIn[nx*ny*k + ny*i + j] = flow->rho[ny*i + j]*(lc->w[k])*(1.0+u+0.5*u*u-1.5*(ux[ny*i + j]*ux[ny*i + j]+uy[ny*i + j]*uy[ny*i + j]));
+			fIn[nx*ny*k + ny*i + j] = (flow->rho[ny*i + j])*(lc->w[k])*(1.0+u+0.5*u*u-1.5*(ux[ny*i + j]*ux[ny*i + j]+uy[ny*i + j]*uy[ny*i + j]));
 			}
 		}
 	}
@@ -110,7 +108,7 @@ void initRho(LatticeConsts* lc, FlowData* flow) {
 
 	nx = lc->nx;
 	ny = lc->ny;
-	rho = malloc(nx*ny* sizeof(double));
+	rho = (double*) malloc(nx*ny* sizeof(double));
 	
 	for (i = 0; i < nx; i++){
 			for (j = 0; j < ny; j++){
@@ -157,18 +155,18 @@ void initialize(FlowData* flow, SimParams* params, LatticeConsts* lc, char* inPa
 	//Read geometry and set dimensions
 	readObstacle(lc,params);//Read obstacle data from file
 	mapObstacleCells(lc,params);//Array of indices to bounce back nodes
+	
+	//Cast to non-dimensional form
+	nonDimensionalize(lc, params);
 			
 	//ICs: Initialze flow as Poiseuille flow
 	nx = lc->nx;
 	ny = lc->ny;
 	initRho(lc,flow);
+	flow->uy = (double*) calloc(nx*ny,sizeof(double));
 	initUx(lc,flow,params);
 	initFin(lc,flow);
-	flow->uy = calloc(nx*ny,sizeof(double));
-	flow->fOut = malloc(nx*ny*9* sizeof(double));
-	
-	//Cast to non-dimensional form
-	nonDimensionalize(lc, params);
+	flow->fOut = (double*) malloc(nx*ny*9* sizeof(double));
 }
 
 void setLatticeConstants(LatticeConsts* lc) {

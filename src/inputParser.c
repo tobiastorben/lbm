@@ -5,7 +5,7 @@ int parseInput(char* inPath, SimParams* params) {
 	char* line =  (char*) malloc(1000);
 	params->obstaclePath = (char*) malloc(1000);
 	params->outDir = (char*) malloc(1000);
-	int outputSelect[] = {0,0,0,0,0};
+	int* outputSelect =  (int*) calloc(5,sizeof(int));
 	char* token;
 	int count = 0;
 	int outDirIsSet = 0;
@@ -85,7 +85,7 @@ int parseInput(char* inPath, SimParams* params) {
 		
 	}
 	if (!outDirIsSet) strcpy(params->outDir,"..\\res");
-	memcpy(params->outputSelect,outputSelect, sizeof(outputSelect));
+	params->outputSelect=outputSelect;
 	free(line);
 	return !(count == 8);
 }

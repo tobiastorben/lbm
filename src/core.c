@@ -73,7 +73,7 @@ void stream(FlowData* flow, LatticeConsts* lc) {
 	
 	nx = lc->nx;
 	ny = lc->ny;
-	nxny = nxny;
+	nxny = nx*ny;
 	ex = lc->exI;
 	ey = lc->eyI;
 	fIn = flow->fIn;

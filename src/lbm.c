@@ -12,13 +12,15 @@ int main(int argc, char* argv[]) {
 	FlowData flow;
 	LatticeConsts lc;
 	time_t t1,t2;
-	double initialRho,progression;
+	double progression;
 	int iter;
-	int outputSelectAll[] = {1,1,1,1,1};
-	char* inPath = malloc(1000);
+	char* inPath;
 
 	if (argc == 2) inPath = argv[1];
-	else strcpy(inPath,"..\\input\\input.in");
+	else {
+		inPath = (char*) malloc(100);
+		strcpy(inPath,"..\\input\\input.in");
+	}
 	
 	initialize(&flow,&params,&lc,inPath);
 
@@ -44,17 +46,17 @@ int main(int argc, char* argv[]) {
 		stream(&flow,&lc);
 		
 		//Write results and progression
-		/*if (iter >= startWrite && iter % cyclesPerWrite == 0) {
-			writeResults(ux,uy,rho,nx,ny,bbCells,bbCellMat,nBBcells,iter,outDir,outputSelect);
+		if (iter >= (params.startWrite) && iter % (params.cyclesPerWrite) == 0) {
+			writeResults(&flow, &lc, &params, iter);
 		}
-		progression = 100*iter/nIter;
+		progression = 100*iter/(params.nIter);
 		printf("%2.0f%%\b\b\b", progression);
-		fflush(stdout);*/
+		fflush(stdout);
 	}
 	t2 = clock();
-	//printf("100%%\n\nElapsed time: %f s\n\n", ((float) t2-(float) t1)/1000.0);
-	//writeResults(ux,uy,rho,nx,ny,bbCells,bbCellMat,nBBcells,iter,outDir,outputSelectAll);
-	//printf("Results written to: %s\n", outDir);
+	printf("100%%\n\nElapsed time: %f.2 s\n\n", ((float) t2-(float) t1)/1000.0);
+	writeResults(&flow, &lc, &params, iter);//TODO : Set outputSelect to ones
+	printf("Results written to: %s\n", params.outDir);
 	return 0;
 }
 
