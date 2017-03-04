@@ -78,16 +78,16 @@ void initUx(LatticeConsts* lc, FlowData* flow, SimParams* params) {
 flow->ux = ux;	
 }
 
-void initFin(LatticeConsts* lc, FlowData* flow) {
+void initFOut(LatticeConsts* lc, FlowData* flow) {
 	int i,j,k,nx,ny;
-	double u, *fIn,*ux,*uy;
+	double u, *fOut,*ux,*uy;
 	
 	nx = lc->nx;
 	ny = lc->ny;
 	ux = flow->ux;
 	uy = flow->uy;
 	//Allocate three dimensional array. Indexed as: [f*nx*ny+(nx-1)*ny+ny]
-	fIn = (double*) malloc(nx*ny*9* sizeof(double));
+	fOut = (double*) malloc(nx*ny*9* sizeof(double));
 	
 	//Initialize particle distribution as equilibrium distrubution for
 	//for a Poiseuille flow
@@ -95,11 +95,11 @@ void initFin(LatticeConsts* lc, FlowData* flow) {
 		for (i = 0; i < lc->nx; i++){
 			for (j = 0; j < lc->ny; j++){
 			u = 3.0*((lc->ex[k])*ux[ny*i + j] + (lc->ey[k])*uy[ny*i + j]);
-			fIn[nx*ny*k + ny*i + j] = (flow->rho[ny*i + j])*(lc->w[k])*(1.0+u+0.5*u*u-1.5*(ux[ny*i + j]*ux[ny*i + j]+uy[ny*i + j]*uy[ny*i + j]));
+			fOut[nx*ny*k + ny*i + j] = (flow->rho[ny*i + j])*(lc->w[k])*(1.0+u+0.5*u*u-1.5*(ux[ny*i + j]*ux[ny*i + j]+uy[ny*i + j]*uy[ny*i + j]));
 			}
 		}
 	}
-	flow->fIn = fIn;
+	flow->fOut = fOut;
 }
 
 void initRho(LatticeConsts* lc, FlowData* flow) {
@@ -139,8 +139,8 @@ void nonDimensionalize(LatticeConsts* lc, SimParams* params) {
 	return;
 }
 
-void initialize(FlowData* flow, SimParams* params, LatticeConsts* lc, char* inPath) {
-	int nx,ny;
+void initialize(FlowData* flow, SimParams* params, LatticeConsts* lc, ThreadData* tdata, char* inPath) {
+	int nx,ny,i,nThreads;
 	
 	printf("Initializing...\n\n");
 	
@@ -165,8 +165,23 @@ void initialize(FlowData* flow, SimParams* params, LatticeConsts* lc, char* inPa
 	initRho(lc,flow);
 	flow->uy = (double*) calloc(nx*ny,sizeof(double));
 	initUx(lc,flow,params);
-	initFin(lc,flow);
-	flow->fOut = (double*) malloc(nx*ny*9* sizeof(double));
+	initFOut(lc,flow);
+	flow->fIn = (double*) malloc(nx*ny*9* sizeof(double));
+	memcpy(flow->fIn,flow->fOut,nx*ny*9*sizeof(double));
+	
+	//Initialize thread data
+	nThreads = 4;
+	params->nThreads = nThreads;//MOVE TO PARSER
+	pthread_t threads[nThreads];	
+	//tdata = (ThreadData*) malloc(nThreads*sizeof(ThreadData));
+	for (i = 0; i < nThreads; i++){
+		tdata[i].thread = threads[i];
+		tdata[i].params = params;
+		tdata[i].lc = lc;
+		tdata[i].flow = flow;
+		tdata[i].startX = i*(((float) nx)/nThreads);
+		tdata[i].endX = (i+1)*(((float) nx)/nThreads)-1;
+	}	
 }
 
 void setLatticeConstants(LatticeConsts* lc) {

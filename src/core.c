@@ -1,29 +1,54 @@
 #include "core.h"
+#include <stdio.h>
 
-void step(FlowData* flow, LatticeConsts* lc, SimParams* params) {
-	//Update macroscopic variables	
-	updateRho(flow,lc);		
-	updateU(flow,lc);
+void step(FlowData* flow, LatticeConsts* lc, SimParams* params, ThreadData* tdata) {
+	int nThreads = params->nThreads;
+	streamBlockBoundaries(flow,lc,params);
+	//Update macroscopic variables
+	for (int i = 0; i < nThreads; i++) {
+		pthread_create(&(tdata[i].thread),NULL,streamAndUpdateBlock,&tdata[i]);
+	}
+	
+	for (int i = 0; i < nThreads; i++) {
+		pthread_join(tdata[i].thread,NULL);
+	}
 	
 	//Apply BCs
 	inlet(flow,lc,params);//Poiseuille (Zou/He)		
 	outlet(flow,lc);//Constant pressure (Zou/He)
 	
 	//Collide (Bhatnagar-Gross-Kroot model)
-	collide(flow,lc,params);//Particle-Particle collisions		
-	bounce(flow,lc,params);//Bounce-back collision with boundary
+	for (int i = 0; i < nThreads; i++) {
+		pthread_create(&(tdata[i].thread),NULL,collideBlock,&tdata[i]);
+	}
 	
-	//Streaming
-	stream(flow,lc);
+	for (int i = 0; i < nThreads; i++) {
+		pthread_join(tdata[i].thread,NULL);
+	}
+	bounce(flow,lc,params);//Bounce-back collision with boundary
 }
 
-void updateRho(FlowData* flow, LatticeConsts* lc) {
+void* streamAndUpdateBlock(void* tdata_void) {
+	ThreadData* tdata = (ThreadData*) tdata_void;
+	streamBlockInterior(tdata->flow,tdata->lc,tdata->startX,tdata->endX);
+	updateRho(tdata->flow,tdata->lc,tdata->startX,tdata->endX);		
+	updateU(tdata->flow,tdata->lc,tdata->startX,tdata->endX);
+	return NULL;
+}
+
+void* collideBlock(void* tdata_void) {
+	ThreadData* tdata = (ThreadData*) tdata_void;
+	collide(tdata->flow,tdata->lc,tdata->params,tdata->startX,tdata->endX);
+	return NULL;
+}
+
+void updateRho(FlowData* flow, LatticeConsts* lc, int startX, int endX) {
 	double sum;
 	int nx,ny;
 	
 	nx =lc->nx;
 	ny = lc->ny;
-	for (int i = 0; i < nx; i++) {
+	for (int i = startX; i <= endX; i++) {
 		for (int j = 0; j < ny; j++){
 			sum = 0;
 			for (int k = 0; k < 9; k++) {
@@ -34,7 +59,7 @@ void updateRho(FlowData* flow, LatticeConsts* lc) {
 	}
 }
 
-void updateU(FlowData* flow, LatticeConsts* lc){
+void updateU(FlowData* flow, LatticeConsts* lc, int startX, int endX){
 	double sumX, sumY,*fIn,*ex,*ey,*rho,*ux,*uy;
 	int nx,ny,nxny;
 	
@@ -48,7 +73,7 @@ void updateU(FlowData* flow, LatticeConsts* lc){
 	ux = flow->ux;
 	uy = flow->uy;
 	
-	for (int i = 0; i < nx; i++) {
+	for (int i = startX; i <= endX; i++) {
 		for (int j = 0; j < ny; j++){
 			sumX = 0;
 			sumY = 0;
@@ -64,7 +89,7 @@ void updateU(FlowData* flow, LatticeConsts* lc){
 
 
 
-void collide(FlowData* flow, LatticeConsts* lc, SimParams* params){
+void collide(FlowData* flow, LatticeConsts* lc, SimParams* params, int startX, int endX){
 	double u,fEq,uSq,rhoIJ,uxIJ,uyIJ,*ux,*uy,*ey,*ex,*fOut,*fIn,*rho,*w,tau;
 	int i,j,k,nx,ny, nxny;
 	
@@ -80,8 +105,9 @@ void collide(FlowData* flow, LatticeConsts* lc, SimParams* params){
 	uy = flow->uy;
 	w = lc->w;
 	tau = params->tau;
+	//printf("StartX: %d, EndX: %d\n",startX,endX );
 	
-	for (i = 0; i < nx; i++){
+	for (i = startX; i <= endX; i++){
 		for (j = 0; j < ny; j++){
 			uxIJ = ux[ny*i + j];
 			uyIJ = uy[ny*i + j];
@@ -96,6 +122,51 @@ void collide(FlowData* flow, LatticeConsts* lc, SimParams* params){
 	}			 
 }
 
+void streamBlockInterior(FlowData* flow,LatticeConsts* lc,int startX, int endX) {
+	int i,j,k,nx,ny,nxny,*ex,*ey;
+	double *fIn,*fOut;
+	
+	nx = lc->nx;
+	ny = lc->ny;
+	nxny = nx*ny;
+	ex = lc->exI;
+	ey = lc->eyI;
+	fIn = flow->fIn;
+	fOut = flow->fOut;
+	
+	//Interior
+	for (i = startX+1; i <= endX; i++) {
+		for (j = 1; j < ny-1; j++) {
+			for (k = 0; k < 9; k++) {
+				fIn[nxny*k+ny*i+j] = fOut[k*nxny+(i-ex[k])*ny +j-ey[k]];
+			}
+		}
+	}	
+}
+
+void streamBlockBoundaries(FlowData* flow,LatticeConsts* lc,SimParams* params){
+	int i,j,k,nx,ny,nxny,*ex,*ey,blockSize,nThreads;
+	double *fIn,*fOut;
+	
+	nx = lc->nx;
+	ny = lc->ny;
+	nxny = nx*ny;
+	ex = lc->exI;
+	ey = lc->eyI;
+	fIn = flow->fIn;
+	fOut = flow->fOut;
+	nThreads = params->nThreads;
+	blockSize = nx/nThreads;
+	
+	//Interior
+	for (i = blockSize; i < nx-1; i+=blockSize) {
+		for (j = 1; j < ny-1; j++) {
+			for (k = 0; k < 9; k++) {
+				fIn[nxny*k+ny*i+j] = fOut[k*nxny+(i-ex[k])*ny +j-ey[k]];
+			}
+		}
+	}
+}
 
 
 void stream(FlowData* flow, LatticeConsts* lc) {
@@ -118,8 +189,8 @@ void stream(FlowData* flow, LatticeConsts* lc) {
 			}
 		}
 	}	
-	
-	//Outlet
+	//TODO : UNNECESSARY?
+	/*//Outlet
 	for (j = 1; j < ny-1; j++) {
 		for (k = 0; k < 9; k++) {
 			if (ex[k]==-1) fIn[k*nxny+(nx-1)*ny+j] = fOut[k*nxny+j-ey[k]];
@@ -182,5 +253,5 @@ void stream(FlowData* flow, LatticeConsts* lc) {
 				}
 			else if (ey[k]==1) fIn[k*nxny] = fOut[k*nxny-ex[k]*ny+ny-1];
 			else fIn[k*nxny] = fOut[k*nxny-ex[k]*ny-ey[k]];
-		}
+		}*/
 }
