@@ -139,8 +139,9 @@ void nonDimensionalize(LatticeConsts* lc, SimParams* params) {
 	return;
 }
 
-void initialize(FlowData* flow, SimParams* params, LatticeConsts* lc, ThreadData* tdata, char* inPath) {
+void initialize(FlowData* flow, SimParams* params, LatticeConsts* lc, ThreadData** tdata, char* inPath) {
 	int nx,ny,i,nThreads;
+	pthread_t *threads;
 	
 	printf("Initializing...\n\n");
 	
@@ -170,17 +171,16 @@ void initialize(FlowData* flow, SimParams* params, LatticeConsts* lc, ThreadData
 	memcpy(flow->fIn,flow->fOut,nx*ny*9*sizeof(double));
 	
 	//Initialize thread data
-	nThreads = 4;
-	params->nThreads = nThreads;//MOVE TO PARSER
-	pthread_t threads[nThreads];	
-	//tdata = (ThreadData*) malloc(nThreads*sizeof(ThreadData));
+	nThreads = params->nThreads;
+	threads = (pthread_t*) malloc(nThreads*sizeof(pthread_t));	
+	*tdata = (ThreadData*) malloc(nThreads*sizeof(ThreadData));
 	for (i = 0; i < nThreads; i++){
-		tdata[i].thread = threads[i];
-		tdata[i].params = params;
-		tdata[i].lc = lc;
-		tdata[i].flow = flow;
-		tdata[i].startX = i*(((float) nx)/nThreads);
-		tdata[i].endX = (i+1)*(((float) nx)/nThreads)-1;
+		(*tdata)[i].thread = threads[i];
+		(*tdata)[i].params = params;
+		(*tdata)[i].lc = lc;
+		(*tdata)[i].flow = flow;
+		(*tdata)[i].startX = i*(((float) nx)/nThreads);
+		(*tdata)[i].endX = (i+1)*(((float) nx)/nThreads)-1;
 	}	
 }
 

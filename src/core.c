@@ -158,7 +158,6 @@ void streamBlockBoundaries(FlowData* flow,LatticeConsts* lc,SimParams* params){
 	nThreads = params->nThreads;
 	blockSize = nx/nThreads;
 	
-	//Interior
 	for (i = blockSize; i < nx-1; i+=blockSize) {
 		for (j = 1; j < ny-1; j++) {
 			for (k = 0; k < 9; k++) {

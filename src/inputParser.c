@@ -60,6 +60,11 @@ int parseInput(char* inPath, SimParams* params) {
 			strcpy(params->outDir,strtok(strtok(NULL, "="),(NULL, "\r")));
 			outDirIsSet = 1;
 		}
+		
+		else if(!strcmp(token,"nThreads")){
+			params->nThreads = atoi(strtok(NULL, "="));	
+			count++;
+		}
 				
 		else if(!strcmp(token,"outputSelect")){
 			token = strtok(NULL, ",\r\n");
@@ -87,5 +92,6 @@ int parseInput(char* inPath, SimParams* params) {
 	if (!outDirIsSet) strcpy(params->outDir,"..\\res");
 	params->outputSelect=outputSelect;
 	free(line);
-	return !(count == 8);
+	fclose(fp);
+	return !(count == 9);
 }
