@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
 	if (argc == 2) inPath = argv[1];
 	else {
 		inPath = (char*) malloc(100);
-		strcpy(inPath,"..\\input\\input.in");
+		strcpy(inPath,"../input/input.in");
 	}
 	
 	//Initialize simulation

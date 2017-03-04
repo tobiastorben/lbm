@@ -89,7 +89,7 @@ int parseInput(char* inPath, SimParams* params) {
 		}
 		
 	}
-	if (!outDirIsSet) strcpy(params->outDir,"..\\res");
+	if (!outDirIsSet) strcpy(params->outDir,"../res");
 	params->outputSelect=outputSelect;
 	free(line);
 	fclose(fp);

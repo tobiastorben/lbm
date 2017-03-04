@@ -3,7 +3,7 @@
 %All simulation parameters below must be set to run the program. The order is arbitraty. "%" for comments
 
 %Path to obstacle file
-obstaclePath=..\obstacleMasks\fineCyl.mask
+obstaclePath=../obstacleMasks/fineCyl.mask
 
 %Number of threads for solving flow. Threads for writing output and visualization will come in addition
 nThreads=4
@@ -21,7 +21,7 @@ viscosity=0.0002
 inletVel=0.2
 
 %Number of interations
-nIter=5000
+nIter=50
 
 %Number of iterations between each result write
 cyclesPerWrite=1
@@ -34,5 +34,5 @@ startWrite=0
 %The final value for all variables will always be written
 outputSelect=ux,uy
 
-%Output directory (Default: ..\res\)
-%outDir=..\res
+%Output directory (Default: ../res)
+%outDir=../res

@@ -121,28 +121,28 @@ void writeResults(FlowData* flow, LatticeConsts* lc, SimParams* params,int iter)
 	
 	if (outputSelect[0]) {
 		strcpy(path,outDir);
-		sprintf(fName,"\\ux%d.csv", iter);
+		sprintf(fName,"/ux%d.csv", iter);
 		strcat(path,fName);
 		csvWriteD(ux,nx,ny,path);
 	}
 	
 	if (outputSelect[1]) {
 		strcpy(path,outDir);
-		sprintf(fName,"\\uy%d.csv", iter);
+		sprintf(fName,"/uy%d.csv", iter);
 		strcat(path,fName);
 		csvWriteD(uy,nx,ny,path);
 	}
 	
 	if (outputSelect[2]) {
 		strcpy(path,outDir);
-		sprintf(fName,"\\p%d.csv", iter);
+		sprintf(fName,"/p%d.csv", iter);
 		strcat(path,fName);
 		csvWritePres(rho,nx,ny,path);
 	}
 	
 	if (outputSelect[3]) {
 		strcpy(path,outDir);
-		sprintf(fName,"\\omega%d.csv", iter);
+		sprintf(fName,"/omega%d.csv", iter);
 		strcat(path,fName);
 		csvWriteOmega(ux,uy,nx,ny,path);
 	}
