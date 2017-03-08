@@ -1,43 +1,50 @@
 #include "core.h"
 #include <stdio.h>
 
-void step(FlowData* flow, LatticeConsts* lc, SimParams* params, ThreadData* tdata) {
+void step(FlowData* flow, LatticeConsts* lc, SimParams* params, ThreadData* tdata) {//TODO : Fix for 1 thread
 	int nThreads = params->nThreads;
+	
 	streamBlockBoundaries(flow,lc,params);
-	//Update macroscopic variables
-	for (int i = 0; i < nThreads; i++) {
-		pthread_create(&(tdata[i].thread),NULL,streamAndUpdateBlock,&tdata[i]);
-	}
+
+	pthread_create(&(tdata[0].thread),NULL,updateFirstBlock,&tdata[0]);
+	pthread_create(&(tdata[nThreads-1].thread),NULL,updateLastBlock,&tdata[nThreads-1]);
 	
 	for (int i = 0; i < nThreads; i++) {
-		pthread_join(tdata[i].thread,NULL);
+		pthread_create(&(tdata[i].thread),NULL,updateBlock,&tdata[i]);
 	}
-	
-	//Apply BCs
-	inlet(flow,lc,params);//Poiseuille (Zou/He)		
-	outlet(flow,lc);//Constant pressure (Zou/He)
-	
-	//Collide (Bhatnagar-Gross-Kroot model)
-	for (int i = 0; i < nThreads; i++) {
-		pthread_create(&(tdata[i].thread),NULL,collideBlock,&tdata[i]);
-	}
-	
+		
 	for (int i = 0; i < nThreads; i++) {
 		pthread_join(tdata[i].thread,NULL);
 	}
+
 	bounce(flow,lc,params);//Bounce-back collision with boundary
 }
 
-void* streamAndUpdateBlock(void* tdata_void) {
+void* updateBlock(void* tdata_void) {
 	ThreadData* tdata = (ThreadData*) tdata_void;
 	streamBlockInterior(tdata->flow,tdata->lc,tdata->startX,tdata->endX);
 	updateRho(tdata->flow,tdata->lc,tdata->startX,tdata->endX);		
 	updateU(tdata->flow,tdata->lc,tdata->startX,tdata->endX);
+	collide(tdata->flow,tdata->lc,tdata->params,tdata->startX,tdata->endX);
 	return NULL;
 }
 
-void* collideBlock(void* tdata_void) {
+void* updateFirstBlock(void* tdata_void) {
 	ThreadData* tdata = (ThreadData*) tdata_void;
+	streamBlockInterior(tdata->flow,tdata->lc,tdata->startX,tdata->endX);
+	updateRho(tdata->flow,tdata->lc,tdata->startX,tdata->endX);		
+	updateU(tdata->flow,tdata->lc,tdata->startX,tdata->endX);
+	inlet(tdata->flow,tdata->lc,tdata->params);//Poiseuille (Zou/He)		
+	collide(tdata->flow,tdata->lc,tdata->params,tdata->startX,tdata->endX);
+	return NULL;
+}
+
+void* updateLastBlock(void* tdata_void) {
+	ThreadData* tdata = (ThreadData*) tdata_void;
+	streamBlockInterior(tdata->flow,tdata->lc,tdata->startX,tdata->endX);
+	updateRho(tdata->flow,tdata->lc,tdata->startX,tdata->endX);		
+	updateU(tdata->flow,tdata->lc,tdata->startX,tdata->endX);
+	outlet(tdata->flow,tdata->lc);//Constant pressure (Zou/He)
 	collide(tdata->flow,tdata->lc,tdata->params,tdata->startX,tdata->endX);
 	return NULL;
 }
@@ -105,7 +112,7 @@ void collide(FlowData* flow, LatticeConsts* lc, SimParams* params, int startX, i
 	uy = flow->uy;
 	w = lc->w;
 	tau = params->tau;
-	//printf("StartX: %d, EndX: %d\n",startX,endX );
+
 	
 	for (i = startX; i <= endX; i++){
 		for (j = 0; j < ny; j++){
@@ -114,11 +121,11 @@ void collide(FlowData* flow, LatticeConsts* lc, SimParams* params, int startX, i
 			rhoIJ = rho[ny*i + j];
 			uSq = 1.5*(uxIJ*uxIJ+uyIJ*uyIJ);
 			for (k = 0; k < 9; k++){
-		u = 3.0*(ex[k]*uxIJ + ey[k]*uyIJ);
-		fEq = rhoIJ*(w[k])*(1.0+u+0.5*u*u-uSq);
-		fOut[nxny*k + ny*i + j] = fIn[nxny*k + ny*i + j]-(fIn[nxny*k + ny*i + j]-fEq)/tau;
+				u = 3.0*(ex[k]*uxIJ + ey[k]*uyIJ);
+				fEq = rhoIJ*(w[k])*(1.0+u+0.5*u*u-uSq);
+				fOut[nxny*k + ny*i + j] = fIn[nxny*k + ny*i + j]-(fIn[nxny*k + ny*i + j]-fEq)/tau;//Change to *omega for speed? 
+			}
 		}
-	}
 	}			 
 }
 
@@ -134,7 +141,7 @@ void streamBlockInterior(FlowData* flow,LatticeConsts* lc,int startX, int endX) 
 	fIn = flow->fIn;
 	fOut = flow->fOut;
 	
-	//Interior
+	//Interior (Change to 2 cols spacing=)
 	for (i = startX+1; i <= endX; i++) {
 		for (j = 1; j < ny-1; j++) {
 			for (k = 0; k < 9; k++) {
@@ -165,92 +172,4 @@ void streamBlockBoundaries(FlowData* flow,LatticeConsts* lc,SimParams* params){
 			}
 		}
 	}
-}
-
-
-void stream(FlowData* flow, LatticeConsts* lc) {
-	int i,j,k,nx,ny,nxny,*ex,*ey;
-	double *fIn,*fOut;
-	
-	nx = lc->nx;
-	ny = lc->ny;
-	nxny = nx*ny;
-	ex = lc->exI;
-	ey = lc->eyI;
-	fIn = flow->fIn;
-	fOut = flow->fOut;
-	
-	//Interior
-	for (i = 1; i < nx-1; i++) {
-		for (j = 1; j < ny-1; j++) {
-			for (k = 0; k < 9; k++) {
-				fIn[nxny*k+ny*i+j] = fOut[k*nxny+(i-ex[k])*ny +j-ey[k]];
-			}
-		}
-	}	
-	//TODO : UNNECESSARY?
-	/*//Outlet
-	for (j = 1; j < ny-1; j++) {
-		for (k = 0; k < 9; k++) {
-			if (ex[k]==-1) fIn[k*nxny+(nx-1)*ny+j] = fOut[k*nxny+j-ey[k]];
-			else fIn[k*nxny+(nx-1)*ny+j] = fOut[k*nxny + (nx-1-ex[k])*ny+j-ey[k]];
-		}
-	}
-	//Inlet
-	for (j = 1; j < ny-1; j++) {
-		for (k = 0; k < 9; k++) {
-			if (ex[k]==1) fIn[k*nxny +j] = fOut[k*nxny+(nx-1)*ny+j-ey[k]];
-			else fIn[k*nxny +j] = fOut[k*nxny-ex[k]*ny+j-ey[k]];
-		}
-	}
-	//Top wall
-	for (i = 1; i < nx-1; i++) {
-		for (k = 0; k < 9; k++) {
-			if (ey[k]==-1) fIn[k*nxny +i*ny + ny-1] = fOut[k*nxny +(i-ex[k])*ny];
-			else fIn[k*nxny +i*ny + ny-1] = fOut[k*nxny +(i-ex[k])*ny +ny-1-ey[k]];
-		}
-	}
-	//Bottom wall
-	for (i = 1; i < nx-1; i++) {
-		for (k = 0; k < 9; k++) {
-			if (ey[k]==1) fIn[k*nxny+ny*i] = fOut[k*nxny +(i-ex[k])*ny+ny-1];
-			else fIn[k*nxny + ny*i] = fOut[k*nxny + (i-ex[k])*ny-ey[k]];
-		}
-	}
-	//Top right corner
-	for (k = 0; k < 9; k++) {
-			if (ex[k]==-1){
-				if (ey[k]==-1) fIn[k*nxny+(nx-1)*ny+ny-1] = fOut[k*nxny];
-				else fIn[k*nxny+(nx-1)*ny+ny-1] = fOut[k*nxny +ny-1-ey[k]];
-			}
-			else if (ey[k]==-1) fIn[k*nxny+(nx-1)*ny+ny-1] = fOut[k*nxny + (nx-1-ex[k])*ny];
-			else fIn[k*nxny+(nx-1)*ny+ny-1] = fOut[k*nxny + (nx-1-ex[k])*ny +ny-1-ey[k]];
-		}		
-	//Bottom right corner
-	for (k = 0; k < 9; k++) {
-			if (ex[k]==-1){
-				if (ey[k]==1) fIn[k*nxny+(nx-1)*ny] = fOut[k*nxny + ny-1];
-				else fIn[k*nxny+(nx-1)*ny] = fOut[k*nxny-ey[k]];
-				}
-			else if (ey[k]==1) fIn[k*nxny+(nx-1)*ny] = fOut[k*nxny + (nx-1-ex[k])*ny + ny-1];
-			else fIn[k*nxny+(nx-1)*ny] = fOut[k*nxny + (nx-1-ex[k])*ny -ey[k]];
-		}	
-	//Top left corner
-	for (k = 0; k < 9; k++) {
-			if (ex[k]==1){
-				if (ey[k]==-1) fIn[k*nxny+ ny-1] = fOut[k*nxny+(nx-1)*ny];
-				else fIn[k*nxny+ ny-1] = fOut[k*nxny+(nx-1)*ny+ny-1-ey[k]];
-			} 
-			else if (ey[k]==-1) fIn[k*nxny+ ny-1] = fOut[k*nxny -ex[k]*ny];
-			else fIn[k*nxny+ ny-1] = fOut[k*nxny -ex[k]*ny +ny-1-ey[k]];
-		}		
-	//Bottom left corner
-	for (k = 0; k < 9; k++) {
-			if (ex[k]==1){
-				if (ey[k]==1) fIn[k*nxny] = fOut[k*nxny+(nx-1)*ny+ny-1];
-				else fIn[k*nxny] = fOut[k*nxny+(nx-1)*ny+-ey[k]];
-				}
-			else if (ey[k]==1) fIn[k*nxny] = fOut[k*nxny-ex[k]*ny+ny-1];
-			else fIn[k*nxny] = fOut[k*nxny-ex[k]*ny-ey[k]];
-		}*/
 }

@@ -7,7 +7,7 @@ IDIR =../include
 
 LIBS= -lm -lpthread
 
-_DEPS = lbm.h utilities.h boundaries.h core.h initialization.h postProcessing.h inputParser.h
+_DEPS = lbm.h utilities.h boundaries.h core.h initialization.h postProcessing.h inputParser.h structs.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
 _OBJ = lbm.o utilities.o boundaries.o core.o initialization.o postProcessing.o inputParser.o

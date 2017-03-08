@@ -15,7 +15,7 @@ void initRho(LatticeConsts* lc, FlowData* flow);
 void initFOut(LatticeConsts* lc, FlowData* flow);
 void readObstacle(LatticeConsts* lc, SimParams* params);
 void nonDimensionalize(LatticeConsts* lc, SimParams* params);
-void initialize(FlowData* flow, SimParams* params, LatticeConsts* lc, ThreadData** tdata, char* inPath);
+void initialize(FlowData* flow, SimParams* params, LatticeConsts* lc, ThreadData** tdata, PrintData* pdata, char* inPath);
 void setLatticeConstants(LatticeConsts* lc);
 
 #endif

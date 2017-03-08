@@ -1,7 +1,7 @@
 #ifndef BOUNDARIES_H
 #define BOUNDARIES_H
 
-#include "lbm.h"
+#include "structs.h"
 
 void inlet(FlowData* flow, LatticeConsts* lc, SimParams* params);
 void outlet(FlowData* flow, LatticeConsts* lc);

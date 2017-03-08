@@ -1,10 +1,8 @@
 #include "postProcessing.h"
 
-double* calcF(FlowData* flow, LatticeConsts* lc, SimParams* params) {
-	double p,*rho,*F;
-	int i,j,k,ny,*bbCells,*bbCellMat,nBBcells;
-	ny = lc->ny;
-	rho = flow->rho;
+double* calcF(int ny, SimParams* params, double* rho) {
+	double p,*F;
+	int i,j,k,*bbCells,*bbCellMat,nBBcells;
 	bbCells = params->bbCells;
 	bbCellMat = params->bbCellMat;
 	nBBcells = params->nBBcells;

@@ -104,20 +104,26 @@ void csvWriteOmega(double* ux, double* uy, int n, int m, char* path) {
 	fclose(fp);
 }
 
-void writeResults(FlowData* flow, LatticeConsts* lc, SimParams* params,int iter) {
-	double *F,*ux,*uy,*rho;
-	int nx,ny,*outputSelect;
-	char *fName,*path,*outDir;
+void* launchWriteThread(void* pdata_void) {
 	
+	double *F,*ux,*uy,*rho;
+	int nx,ny,iter,*outputSelect;
+	char *fName,*path,*outDir;
+	PrintData* pdata;
+	SimParams* params;
+	
+	pdata = (PrintData*) pdata_void;
 	fName =  (char*) malloc(100);
 	path = (char*) malloc(100);
-	outDir = params->outDir;
-	nx = lc->nx;
-	ny = lc->ny;
-	ux = flow->ux;
-	uy = flow->uy;
-	rho = flow->rho;
-	outputSelect = params->outputSelect;
+	outDir = pdata->outDir;
+	nx = pdata->nx;
+	ny = pdata->ny;
+	ux = pdata->uxCpy;
+	uy = pdata->uyCpy;
+	rho = pdata->rhoCpy;
+	outputSelect = pdata->outputSelect;
+	params = pdata->params;
+	iter = pdata->iter;
 	
 	if (outputSelect[0]) {
 		strcpy(path,outDir);
@@ -151,12 +157,12 @@ void writeResults(FlowData* flow, LatticeConsts* lc, SimParams* params,int iter)
 		strcpy(path,outDir);
 		strcpy(fName, "\\F.csv");
 		strcat(path,fName);
-		F = calcF(flow,lc,params);
+		F = calcF(ny,params,rho);
 		writeTimeSeries(F,2,path);
 	}
 
 	free(path);
-	return;
+	return NULL;
 }
 
 void printProgression(int iter, int nIter) {
@@ -164,4 +170,20 @@ void printProgression(int iter, int nIter) {
 	progression = 100*iter/nIter;
 	printf("%2.0f%%\b\b\b", progression);
 	fflush(stdout);
+}
+
+void writeResults(FlowData* flow, LatticeConsts* lc, int iter, pthread_t* printThread, PrintData* pdata) {
+	int nx,ny;
+	
+	pthread_join(*printThread,NULL);
+	pdata->iter = iter;
+	nx = lc->nx;
+	ny = lc->ny;
+	
+	memcpy(pdata->uxCpy,flow->ux,nx*ny*sizeof(double));
+	memcpy(pdata->uyCpy,flow->uy,nx*ny*sizeof(double));
+	memcpy(pdata->rhoCpy,flow->rho,nx*ny*sizeof(double));
+	pthread_create(printThread,NULL,launchWriteThread,pdata);
+	
+	return;
 }

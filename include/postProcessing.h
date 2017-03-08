@@ -2,8 +2,8 @@
 #define POSTPROCESSING_H
 
 #include <stdlib.h>
-#include "lbm.h"
+#include "structs.h"
 
-double* calcF(FlowData* flow, LatticeConsts* lc, SimParams* params);
+double* calcF(int ny, SimParams* params, double* rho);
 
 #endif

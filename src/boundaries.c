@@ -10,12 +10,12 @@ void inlet(FlowData* flow, LatticeConsts* lc, SimParams* params) {
 	uy = flow->uy;
 	fIn = flow->fIn;
 	
-	H = (double) ny-2.0;//TODO: Change?
+	H = (double) ny-2.0;
 	coeff = 4.0*(params->u0)/(H*H);
 	for (int j = 1; j < (ny-1);j++) {
-		y = j-0.5;//Change?? 
+		y = j-0.5;
+		
 		//Poiseuille and Zou/He BC
-		//Consider to change indexing of fIn
 		ux[j] = coeff*y*(H-y);
 		uy[j] = 0;
 		sum1 = fIn[j] + fIn[2*nx*ny +j] + fIn[4*nx*ny+j];
@@ -43,7 +43,7 @@ void outlet(FlowData* flow, LatticeConsts* lc) {
 	for (int j = 1; j < (ny-1);j++) {
 		sum1 = fIn[(nx-1)*ny+j] + fIn[2*nx*ny+(nx-1)*ny+j] + fIn[4*nx*ny+(nx-1)*ny+j];
 		sum2 = fIn[1*nx*ny+(nx-1)*ny+j] + fIn[5*nx*ny+(nx-1)*ny+j] + fIn[8*nx*ny+(nx-1)*ny+j];
-		ux[(nx-1)*ny +j] = -1.0 +sum1 + 2.0*sum2;//UNCERTAIN!
+		ux[(nx-1)*ny +j] = -1.0 +sum1 + 2.0*sum2;
 		uy[(nx-1)*ny +j] = 0;
 		fIn[3*nx*ny+(nx-1)*ny + j] = fIn[1*nx*ny+(nx-1)*ny + j] - (2.0/3)*ux[(nx-1)*ny +j];
 		fIn[7*nx*ny+(nx-1)*ny + j] = fIn[5*nx*ny+(nx-1)*ny + j] + 0.5*(fIn[2*nx*ny+(nx-1)*ny + j]-fIn[4*nx*ny+(nx-1)*ny + j])

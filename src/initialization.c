@@ -139,7 +139,7 @@ void nonDimensionalize(LatticeConsts* lc, SimParams* params) {
 	return;
 }
 
-void initialize(FlowData* flow, SimParams* params, LatticeConsts* lc, ThreadData** tdata, char* inPath) {
+void initialize(FlowData* flow, SimParams* params, LatticeConsts* lc, ThreadData** tdata, PrintData* pdata, char* inPath) {
 	int nx,ny,i,nThreads;
 	pthread_t *threads;
 	
@@ -181,7 +181,18 @@ void initialize(FlowData* flow, SimParams* params, LatticeConsts* lc, ThreadData
 		(*tdata)[i].flow = flow;
 		(*tdata)[i].startX = i*(((float) nx)/nThreads);
 		(*tdata)[i].endX = (i+1)*(((float) nx)/nThreads)-1;
-	}	
+	}
+
+	//Initialize print data
+	pdata->uxCpy = (double*) malloc(nx*ny*sizeof(double));
+	pdata->uyCpy = (double*) malloc(nx*ny*sizeof(double));
+	pdata->rhoCpy = (double*) malloc(nx*ny*sizeof(double));
+	pdata->outDir = params->outDir;
+	pdata->nx = nx;
+	pdata->ny = ny;
+	pdata->outputSelect = params->outputSelect;
+	pdata->params = params;
+	
 }
 
 void setLatticeConstants(LatticeConsts* lc) {

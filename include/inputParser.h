@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "lbm.h"
+#include "structs.h"
 
 int parseInput(char* inPath, SimParams* params);
 
