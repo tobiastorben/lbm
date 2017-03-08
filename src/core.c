@@ -9,7 +9,7 @@ void step(FlowData* flow, LatticeConsts* lc, SimParams* params, ThreadData* tdat
 	pthread_create(&(tdata[0].thread),NULL,updateFirstBlock,&tdata[0]);
 	pthread_create(&(tdata[nThreads-1].thread),NULL,updateLastBlock,&tdata[nThreads-1]);
 	
-	for (int i = 0; i < nThreads; i++) {
+	for (int i = 1; i < nThreads-1; i++) {
 		pthread_create(&(tdata[i].thread),NULL,updateBlock,&tdata[i]);
 	}
 		

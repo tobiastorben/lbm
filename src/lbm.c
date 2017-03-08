@@ -31,13 +31,13 @@ int main(int argc, char* argv[]) {
 		//Write results to file
 		if (iter >= (params.startWrite) && iter % (params.cyclesPerWrite) == 0) {//TODO : OPTIMIZE!!
 		writeResults(&flow,&lc,iter,&printThread,&pdata);
-		}	
-		
-		//Do one time step
-		step(&flow,&lc,&params,tdata);
-						
+		}
+				
 		//Print progression to console
 		printProgression(iter,params.nIter);
+		
+		//Do one time step
+		step(&flow,&lc,&params,tdata);		
 	}
 	pthread_join(printThread,NULL);
 	gettimeofday(&end, NULL);
