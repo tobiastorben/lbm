@@ -141,7 +141,7 @@ void streamBlockInterior(FlowData* flow,LatticeConsts* lc,int startX, int endX) 
 	fIn = flow->fIn;
 	fOut = flow->fOut;
 	
-	//Interior (Change to 2 cols spacing=)
+	//Interior
 	for (i = startX+1; i <= endX; i++) {
 		for (j = 1; j < ny-1; j++) {
 			for (k = 0; k < 9; k++) {

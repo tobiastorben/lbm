@@ -22,13 +22,13 @@ viscosity=0.0002
 inletVel=0.1
 
 %Number of interations
-nIter=2000
+nIter=3000
 
 %Number of iterations between each result write
 cyclesPerWrite=20
 
 %Number of iteration before result writing starts
-startWrite=18000
+startWrite=2900
 
 %Results to be written (NB! Frequent writing of field variables will slow down the execution considerably)
 %Availiable options: X-velocity (ux), Y-velocity (uy), Pressure (p), Vorticity (omega), Lift and Drag (F)

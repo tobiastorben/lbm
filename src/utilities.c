@@ -115,14 +115,14 @@ void* launchWriteThread(void* pdata_void) {
 	pdata = (PrintData*) pdata_void;
 	fName =  (char*) malloc(100);
 	path = (char*) malloc(100);
-	outDir = pdata->outDir;
 	nx = pdata->nx;
 	ny = pdata->ny;
 	ux = pdata->uxCpy;
 	uy = pdata->uyCpy;
 	rho = pdata->rhoCpy;
-	outputSelect = pdata->outputSelect;
 	params = pdata->params;
+	outputSelect = params->outputSelect;
+	outDir = params->outDir;
 	iter = pdata->iter;
 	
 	if (outputSelect[0]) {
@@ -174,7 +174,6 @@ void printProgression(int iter, int nIter) {
 
 void writeResults(FlowData* flow, LatticeConsts* lc, int iter, pthread_t* printThread, PrintData* pdata) {
 	int nx,ny;
-	
 	pthread_join(*printThread,NULL);
 	pdata->iter = iter;
 	nx = lc->nx;

@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
 	for (iter = 1; iter <= params.nIter; iter++){	
 		
 		//Write results to file
-		if (iter >= (params.startWrite) && iter % (params.cyclesPerWrite) == 0) {//TODO : OPTIMIZE!!
+		if (iter >= (params.startWrite) && iter % (params.cyclesPerWrite) == 0) {
 		writeResults(&flow,&lc,iter,&printThread,&pdata);
 		}
 				

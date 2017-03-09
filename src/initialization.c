@@ -35,6 +35,7 @@ void readObstacle(LatticeConsts* lc, SimParams* params) {
 	}	
 	lc->nx = i;
 	lc->ny = j;
+	
 	//Read data into matrix
 	bbCellMat = calloc((lc->nx)*(lc->ny),sizeof(int));
 	fp = fopen(params->obstaclePath,"r");
@@ -71,7 +72,7 @@ void initUx(LatticeConsts* lc, FlowData* flow, SimParams* params) {
 	ux = (double*) malloc(nx*ny * sizeof(double));
 	for (i = 0; i < lc->nx; i++){
 		for (j = 0; j < lc->ny; j++) {
-			y = j-0.5;//Change??
+			y = j-0.5;
 			ux[(lc->ny)*i + j] = (4.0*(params->u0)/(H*H))*(y*H-y*y);
 		}
 	}
@@ -86,7 +87,6 @@ void initFOut(LatticeConsts* lc, FlowData* flow) {
 	ny = lc->ny;
 	ux = flow->ux;
 	uy = flow->uy;
-	//Allocate three dimensional array. Indexed as: [f*nx*ny+(nx-1)*ny+ny]
 	fOut = (double*) malloc(nx*ny*9* sizeof(double));
 	
 	//Initialize particle distribution as equilibrium distrubution for
@@ -187,10 +187,8 @@ void initialize(FlowData* flow, SimParams* params, LatticeConsts* lc, ThreadData
 	pdata->uxCpy = (double*) malloc(nx*ny*sizeof(double));
 	pdata->uyCpy = (double*) malloc(nx*ny*sizeof(double));
 	pdata->rhoCpy = (double*) malloc(nx*ny*sizeof(double));
-	pdata->outDir = params->outDir;
 	pdata->nx = nx;
 	pdata->ny = ny;
-	pdata->outputSelect = params->outputSelect;
 	pdata->params = params;
 	
 }

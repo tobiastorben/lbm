@@ -1,3 +1,5 @@
-More complex and general BC's
+More general BC's
 Visualize with OpenGL
-
+Convert to physical units before writing results
+Consider writing binary files for plotting (float)
+Change to two block spacing for stream

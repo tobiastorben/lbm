@@ -29,8 +29,7 @@ typedef struct {
 typedef struct {
 	SimParams* params;
 	double *uxCpy,*uyCpy,*rhoCpy;
-	int nx,ny,iter,*outputSelect;
-	char* outDir;
+	int nx,ny,iter;
 } PrintData;
 
 #endif
