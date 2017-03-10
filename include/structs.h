@@ -10,7 +10,7 @@ typedef struct {
 
 typedef struct {
 	int nIter,cyclesPerWrite,startWrite,nBBcells,nThreads,*bbCellMat,*bbCells,*outputSelect;
-	double u0,u0Phys,dxPhys,dtPhys,nuPhys,tau;
+	double u0,u0Phys,dxPhys,dtPhys,nuPhys,rhoPhys,tau;
 	char *outDir, *obstaclePath;
 } SimParams;
 

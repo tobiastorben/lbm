@@ -36,6 +36,11 @@ int parseInput(char* inPath, SimParams* params) {
 			count++;
 		}
 		
+		else if(!strcmp(token,"density")){
+			params->rhoPhys = atof(strtok(NULL, "="));
+			count++;
+		}
+		
 		else if(!strcmp(token,"inletVel")){
 			params->u0Phys= atof(strtok(NULL, "="));
 			count++;
@@ -93,5 +98,5 @@ int parseInput(char* inPath, SimParams* params) {
 	params->outputSelect=outputSelect;
 	free(line);
 	fclose(fp);
-	return !(count == 9);
+	return !(count == 10);
 }

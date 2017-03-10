@@ -13,4 +13,5 @@ void streamBlockInterior(FlowData* flow,LatticeConsts* lc,int startX, int endX);
 void streamBlockBoundaries(FlowData* flow,LatticeConsts* lc,SimParams* params);
 void* updateFirstBlock(void* tdata_void);
 void* updateLastBlock(void* tdata_void);
+
 #endif

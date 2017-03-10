@@ -1,7 +1,7 @@
 #include "core.h"
 #include <stdio.h>
 
-void step(FlowData* flow, LatticeConsts* lc, SimParams* params, ThreadData* tdata) {//TODO : Fix for 1 thread
+void step(FlowData* flow, LatticeConsts* lc, SimParams* params, ThreadData* tdata) {
 	int nThreads = params->nThreads;
 	
 	streamBlockBoundaries(flow,lc,params);
@@ -142,7 +142,7 @@ void streamBlockInterior(FlowData* flow,LatticeConsts* lc,int startX, int endX) 
 	fOut = flow->fOut;
 	
 	//Interior
-	for (i = startX+1; i <= endX; i++) {
+	for (i = startX+2; i <= endX; i++) {
 		for (j = 1; j < ny-1; j++) {
 			for (k = 0; k < 9; k++) {
 				fIn[nxny*k+ny*i+j] = fOut[k*nxny+(i-ex[k])*ny +j-ey[k]];
@@ -169,6 +169,7 @@ void streamBlockBoundaries(FlowData* flow,LatticeConsts* lc,SimParams* params){
 		for (j = 1; j < ny-1; j++) {
 			for (k = 0; k < 9; k++) {
 				fIn[nxny*k+ny*i+j] = fOut[k*nxny+(i-ex[k])*ny +j-ey[k]];
+				fIn[nxny*k+ny*(i+1)+j] = fOut[k*nxny+(i+1-ex[k])*ny +j-ey[k]];
 			}
 		}
 	}

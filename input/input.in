@@ -18,22 +18,25 @@ dt=0.01
 %Fluid viscosity
 viscosity=0.0002
 
+%Fluid density
+density=1000
+
 %Inlet velocity
 inletVel=0.1
 
 %Number of interations
-nIter=3000
+nIter=15000
 
 %Number of iterations between each result write
 cyclesPerWrite=20
 
 %Number of iteration before result writing starts
-startWrite=2900
+startWrite=13000
 
 %Results to be written (NB! Frequent writing of field variables will slow down the execution considerably)
-%Availiable options: X-velocity (ux), Y-velocity (uy), Pressure (p), Vorticity (omega), Lift and Drag (F)
+%Availiable options: X-velocity (ux), Y-velocity (uy), Pressure (p), Vorticity (vorticity), Lift and Drag (F)
 %The final value for all variables will always be written
-outputSelect=ux,uy
+outputSelect=vorticity,F
 
 %Output directory (Default: ../res)
 %outDir=../res

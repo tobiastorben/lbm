@@ -69,6 +69,19 @@ void csvWriteLayer(double* mat, int n, int m, int k, char* path) {
 	fclose(fp);
 }
 
+void writeU(double* u, int n, int m, double c, char* path) {
+	FILE* fp;
+	fp = fopen(path,"w");
+	for (int i = 0; i < n; i++){
+		for (int j = 0; j < m; j++){
+		fprintf(fp,"%.3e",c*u[m*i + j]);
+		if (j != m-1) fprintf(fp,",");
+		}
+	if (i != (n-1)) fprintf(fp,"\n");
+	}
+	fclose(fp);
+}
+
 void writeTimeSeries(double* v, int n, char* path) {
 	FILE* fp = fopen(path,"a");
 	for (int i = 0; i < (n-1); i++){
@@ -78,11 +91,15 @@ void writeTimeSeries(double* v, int n, char* path) {
 	fclose(fp);
 }
 
-void csvWritePres(double* rho, int n, int m, char* path) {
-	FILE* fp = fopen(path,"w");
+void writePres(double* rho, int n, int m, double c, double rhoPhys, char* path) {
+	double cSq;
+	FILE* fp;
+	
+	fp = fopen(path,"w");
+	cSq = c*c;
 	for (int i = 0; i < n; i++){
 		for (int j = 0; j < m; j++){
-		fprintf(fp,"%.3e", rho[m*i + j]-1);
+		fprintf(fp,"%.3e", rhoPhys*cSq*(1.0/3.0)*(rho[m*i + j]-1));
 		if (j != m-1) fprintf(fp,",");
 		}
 	if (i != (n-1)) fprintf(fp,"\n");
@@ -90,13 +107,17 @@ void csvWritePres(double* rho, int n, int m, char* path) {
 	fclose(fp);
 }
 
-void csvWriteOmega(double* ux, double* uy, int n, int m, char* path) {
-	FILE* fp = fopen(path,"w");
-	double omega;
+void writeVorticity(double* ux, double* uy, int n, int m, double dt, char* path) {
+	FILE* fp;
+	double vort,coeff;
+	
+	fp = fopen(path,"w");
+	coeff = 1.0/(4.0*dt);
+	
 	for (int i = 0; i < (n-1); i++){
 		for (int j = 0; j < (m-1); j++){
-		omega = 0.5*(uy[(i+1)*m +j] - uy[(i-1)*m +j]	-(ux[i*m +j+1] - uy[i*m +j-1]));
-		fprintf(fp,"%.3e", omega);
+		vort = coeff*(uy[(i+1)*m +j] - uy[(i-1)*m+j] - (ux[i*m +j+1] - ux[i*m +j-1]));
+		fprintf(fp,"%.3e", vort);
 		if (j != m-1) fprintf(fp,",");
 		}
 	if (i != (n-1)) fprintf(fp,"\n");
@@ -106,7 +127,7 @@ void csvWriteOmega(double* ux, double* uy, int n, int m, char* path) {
 
 void* launchWriteThread(void* pdata_void) {
 	
-	double *F,*ux,*uy,*rho;
+	double *F,*ux,*uy,*rho,dx,dt,c,rhoPhys;
 	int nx,ny,iter,*outputSelect;
 	char *fName,*path,*outDir;
 	PrintData* pdata;
@@ -124,43 +145,46 @@ void* launchWriteThread(void* pdata_void) {
 	outputSelect = params->outputSelect;
 	outDir = params->outDir;
 	iter = pdata->iter;
+	dt = params->dtPhys;
+	dx = params->dxPhys;	
+	rhoPhys = params->rhoPhys;
+	c = dx/dt;
 	
 	if (outputSelect[0]) {
 		strcpy(path,outDir);
 		sprintf(fName,"/ux%d.csv", iter);
 		strcat(path,fName);
-		csvWriteD(ux,nx,ny,path);
+		writeU(ux,nx,ny,c,path);
 	}
 	
 	if (outputSelect[1]) {
 		strcpy(path,outDir);
 		sprintf(fName,"/uy%d.csv", iter);
 		strcat(path,fName);
-		csvWriteD(uy,nx,ny,path);
+		writeU(uy,nx,ny,c,path);
 	}
 	
 	if (outputSelect[2]) {
 		strcpy(path,outDir);
 		sprintf(fName,"/p%d.csv", iter);
 		strcat(path,fName);
-		csvWritePres(rho,nx,ny,path);
+		writePres(rho,nx,ny,c,rhoPhys,path);
 	}
 	
 	if (outputSelect[3]) {
 		strcpy(path,outDir);
-		sprintf(fName,"/omega%d.csv", iter);
+		sprintf(fName,"/vort%d.csv", iter);
 		strcat(path,fName);
-		csvWriteOmega(ux,uy,nx,ny,path);
+		writeVorticity(ux,uy,nx,ny,dt,path);
 	}
 	
 	if (outputSelect[4]) {
 		strcpy(path,outDir);
-		strcpy(fName, "\\F.csv");
+		strcpy(fName, "/F.csv");
 		strcat(path,fName);
 		F = calcF(ny,params,rho);
 		writeTimeSeries(F,2,path);
 	}
-
 	free(path);
 	return NULL;
 }

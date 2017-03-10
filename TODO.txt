@@ -1,5 +1,8 @@
+-Priority:
 More general BC's
 Visualize with OpenGL
-Convert to physical units before writing results
+Add skin friction to force calc
+
+-Secondary:
 Consider writing binary files for plotting (float)
-Change to two block spacing for stream
+Remove ifs from file IO
