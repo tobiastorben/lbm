@@ -73,7 +73,7 @@ void initUx(LatticeConsts* lc, FlowData* flow, SimParams* params) {
 	for (i = 0; i < lc->nx; i++){
 		for (j = 0; j < lc->ny; j++) {
 			y = j-0.5;
-			ux[(lc->ny)*i + j] = (4.0*(params->u0)/(H*H))*(y*H-y*y);
+			ux[(lc->ny)*i + j] = 0.0;//(4.0*(params->u0)/(H*H))*(y*H-y*y);
 		}
 	}
 flow->ux = ux;	
@@ -94,8 +94,9 @@ void initFOut(LatticeConsts* lc, FlowData* flow) {
 	for (k = 0; k < 9; k++){
 		for (i = 0; i < lc->nx; i++){
 			for (j = 0; j < lc->ny; j++){
-			u = 3.0*((lc->ex[k])*ux[ny*i + j] + (lc->ey[k])*uy[ny*i + j]);
-			fOut[nx*ny*k + ny*i + j] = (flow->rho[ny*i + j])*(lc->w[k])*(1.0+u+0.5*u*u-1.5*(ux[ny*i + j]*ux[ny*i + j]+uy[ny*i + j]*uy[ny*i + j]));
+			//u = 3.0*((lc->ex[k])*ux[ny*i + j] + (lc->ey[k])*uy[ny*i + j]);
+			//fOut[nx*ny*k + ny*i + j] = (flow->rho[ny*i + j])*(lc->w[k])*(1.0+u+0.5*u*u-1.5*(ux[ny*i + j]*ux[ny*i + j]+uy[ny*i + j]*uy[ny*i + j]));
+			fOut[nx*ny*k + ny*i + j] = lc->w[k];
 			}
 		}
 	}
@@ -126,9 +127,9 @@ void nonDimensionalize(LatticeConsts* lc, SimParams* params) {
 	Re = width*(params->u0Phys)/(params->nuPhys);
 	dx = 1.0/(lc->ny);
 	dt = (params->dtPhys)/t0;
-	params->u0 = dt/dx;
+	params->u0 = 0.05;//dt/dx;
 	nu = dt/(dx*dx*Re);
-	params->tau = 3.0*nu + 0.5;
+	params->tau = 0.692;//= 3.0*nu + 0.5;
 	
 	printf("Numerical simulation parameters:\n");
 	printf("Reynolds number (based on channel width): %.1f\n", Re);

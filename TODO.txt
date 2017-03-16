@@ -1,8 +1,8 @@
 -Priority:
+Fix streaming at boundaries (Make shift arrays?)
 More general BC's
-Visualize with OpenGL
-Add skin friction to force calc
 
 -Secondary:
+Visualize with OpenGL
 Consider writing binary files for plotting (float)
 Remove ifs from file IO

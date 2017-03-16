@@ -4,6 +4,6 @@
 #include <stdlib.h>
 #include "structs.h"
 
-double* calcF(int ny, SimParams* params, double* rho);
+double* calcF(int ny, SimParams* params, double* rho, double* ux, double* uy);
 
 #endif

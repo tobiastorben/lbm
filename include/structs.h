@@ -23,7 +23,7 @@ typedef struct {
 	LatticeConsts* lc;
 	SimParams* params;
 	FlowData* flow;
-	int startX,endX,count;
+	int startX,endX;
 } ThreadData;
 
 typedef struct {
@@ -31,5 +31,13 @@ typedef struct {
 	double *uxCpy,*uyCpy,*rhoCpy;
 	int nx,ny,iter;
 } PrintData;
+
+typedef struct {
+	void (*westFun)(FlowData*,LatticeConsts*);
+	void (*northFun)(FlowData*,LatticeConsts*,int,int);
+	void (*eastFun)(FlowData*,LatticeConsts*);
+	void (*southFun)(FlowData*,LatticeConsts*,int,int);
+	int westBC[2],northBC[2],eastBC[2],southBC[2];	
+} BoundaryData;
 
 #endif

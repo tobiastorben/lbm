@@ -3,7 +3,7 @@
 %All simulation parameters below must be set to run the program. The order is arbitraty. "%" for comments
 
 %Path to obstacle file
-obstaclePath=../obstacleMasks/obstacleCyl.mask
+obstaclePath=../obstacleMasks/testmask.mask
 
 %Number of threads for solving flow. Should be divisable with number of grid points in x direction, minimum 2
 %Threads for writing output and visualization will come in addition
@@ -22,21 +22,21 @@ viscosity=0.0002
 density=1000
 
 %Inlet velocity
-inletVel=0.1
+inletVel=0.0001
 
 %Number of interations
-nIter=15000
+nIter=5000
 
 %Number of iterations between each result write
-cyclesPerWrite=20
+cyclesPerWrite=1
 
 %Number of iteration before result writing starts
-startWrite=13000
+startWrite=5000
 
 %Results to be written (NB! Frequent writing of field variables will slow down the execution considerably)
 %Availiable options: X-velocity (ux), Y-velocity (uy), Pressure (p), Vorticity (vorticity), Lift and Drag (F)
 %The final value for all variables will always be written
-outputSelect=vorticity,F
+outputSelect=ux,uy
 
 %Output directory (Default: ../res)
 %outDir=../res
