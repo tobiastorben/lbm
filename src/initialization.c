@@ -60,25 +60,6 @@ void readObstacle(LatticeConsts* lc, SimParams* params) {
 
 }
 
-void initUx(LatticeConsts* lc, FlowData* flow, SimParams* params) {
-	int i,j,nx,ny;
-	double y,H,*ux;
-	
-	nx = lc->nx;
-	ny = lc->ny;
-	H = (double) lc->ny-2;
-		
-	//Initialize ux as Poiseuille flow
-	ux = (double*) malloc(nx*ny * sizeof(double));
-	for (i = 0; i < lc->nx; i++){
-		for (j = 0; j < lc->ny; j++) {
-			y = j-0.5;
-			ux[(lc->ny)*i + j] = 0.0;//(4.0*(params->u0)/(H*H))*(y*H-y*y);
-		}
-	}
-flow->ux = ux;	
-}
-
 void initFOut(LatticeConsts* lc, FlowData* flow) {
 	int i,j,k,nx,ny;
 	double u, *fOut,*ux,*uy;
@@ -90,12 +71,10 @@ void initFOut(LatticeConsts* lc, FlowData* flow) {
 	fOut = (double*) malloc(nx*ny*9* sizeof(double));
 	
 	//Initialize particle distribution as equilibrium distrubution for
-	//for a Poiseuille flow
+	//still fluid
 	for (k = 0; k < 9; k++){
 		for (i = 0; i < lc->nx; i++){
 			for (j = 0; j < lc->ny; j++){
-			//u = 3.0*((lc->ex[k])*ux[ny*i + j] + (lc->ey[k])*uy[ny*i + j]);
-			//fOut[nx*ny*k + ny*i + j] = (flow->rho[ny*i + j])*(lc->w[k])*(1.0+u+0.5*u*u-1.5*(ux[ny*i + j]*ux[ny*i + j]+uy[ny*i + j]*uy[ny*i + j]));
 			fOut[nx*ny*k + ny*i + j] = lc->w[k];
 			}
 		}
@@ -119,28 +98,70 @@ void initRho(LatticeConsts* lc, FlowData* flow) {
 	flow->rho = rho;
 }
 
-void nonDimensionalize(LatticeConsts* lc, SimParams* params) {
-	double width,Re,t0,dx,dt,nu;
+void nonDimensionalize(LatticeConsts* lc, SimParams* params, BoundaryData* bcdata) {
+	double width,Re,t0,dx,dt,nu,u0,scale,rhoPhys;
 	
+	scale = (params->dtPhys)/(params->dxPhys);
+	rhoPhys = params->rhoPhys;
 	width = (params->dxPhys)*(lc->ny);
-	t0 = width/(params->u0Phys);
-	Re = width*(params->u0Phys)/(params->nuPhys);
+	t0 = width/(params->uRef);
+	Re = width*(params->uRef)/(params->nuPhys);
 	dx = 1.0/(lc->ny);
 	dt = (params->dtPhys)/t0;
-	params->u0 = 0.05;//dt/dx;
+	u0 = dt/dx; 
 	nu = dt/(dx*dx*Re);
-	params->tau = 0.692;//= 3.0*nu + 0.5;
+	params->tau = 3.0*nu + 0.5;
+	
+	if (bcdata->westBCType) {
+		bcdata->westBC[0] = 1.0 + 3.0*bcdata->westBC[0]*scale*scale/rhoPhys; 
+		bcdata->westBC[1] = bcdata->westBC[1]*scale;
+	}
+	
+	else {
+		bcdata->westBC[0] = bcdata->westBC[0]*scale;
+		bcdata->westBC[1] = bcdata->westBC[1]*scale;
+	}
+	
+	if (bcdata->northBCType) {
+		bcdata->northBC[0] = 1.0 + 3.0*bcdata->northBC[0]*scale*scale/rhoPhys; 
+		bcdata->northBC[1] = bcdata->northBC[1]*scale;
+	}
+	
+	else {
+		bcdata->northBC[0] = bcdata->northBC[0]*scale;
+		bcdata->northBC[1] = bcdata->northBC[1]*scale;
+	}
+	
+	if (bcdata->eastBCType) {
+		bcdata->eastBC[0] = 1.0 + 3.0*bcdata->eastBC[0]*scale*scale/rhoPhys; 
+		bcdata->eastBC[1] = bcdata->eastBC[1]*scale;
+	}
+	
+	else {
+		bcdata->eastBC[0] = bcdata->eastBC[0]*scale;
+		bcdata->eastBC[1] = bcdata->eastBC[1]*scale;
+	}
+	
+	if (bcdata->southBCType) {
+		bcdata->southBC[0] = 1.0 + 3.0*bcdata->southBC[0]*scale*scale/rhoPhys; 
+		bcdata->southBC[1] = bcdata->southBC[1]*scale;
+	}
+	
+	else {
+		bcdata->southBC[0] = bcdata->southBC[0]*scale;
+		bcdata->southBC[1] = bcdata->southBC[1]*scale;
+	}
 	
 	printf("Numerical simulation parameters:\n");
-	printf("Reynolds number (based on channel width): %.1f\n", Re);
-	printf("Lattice Mach number: %.3f\n", (params->u0)*sqrt(3.0));
+	printf("Reynolds number (based on domain length i Y-direction): %.1f\n", Re);
+	printf("Lattice Mach number (based on refrance velocity): %.3f\n", (u0)*sqrt(3.0));
 	printf("Speed/Accuracy ratio: %.2f\n", dt/(dx*dx));
 	printf("Relaxation time: %.2f\n\n", params->tau);
 	
 	return;
 }
 
-void initialize(FlowData* flow, SimParams* params, LatticeConsts* lc, ThreadData** tdata, PrintData* pdata, char* inPath) {
+void initialize(FlowData* flow, SimParams* params, LatticeConsts* lc, ThreadData** tdata, PrintData* pdata, BoundaryData* bcdata, char* inPath) {
 	int nx,ny,i,nThreads;
 	pthread_t *threads;
 	
@@ -149,7 +170,7 @@ void initialize(FlowData* flow, SimParams* params, LatticeConsts* lc, ThreadData
 	//D2Q9 lattice constants
 	setLatticeConstants(lc);
 	
-	if (parseInput(inPath,params)) {
+	if (parseInput(inPath,params,bcdata)) {
 		printf("Invalid simulation parameters. Exiting.");
 		exit(1);
 	}
@@ -159,17 +180,16 @@ void initialize(FlowData* flow, SimParams* params, LatticeConsts* lc, ThreadData
 	mapObstacleCells(lc,params);//Array of indices to bounce back nodes
 	
 	//Cast to non-dimensional form
-	nonDimensionalize(lc, params);
+	nonDimensionalize(lc, params,bcdata);
 			
 	//ICs: Initialze flow as Poiseuille flow
 	nx = lc->nx;
 	ny = lc->ny;
 	initRho(lc,flow);
 	flow->uy = (double*) calloc(nx*ny,sizeof(double));
-	initUx(lc,flow,params);
-	initFOut(lc,flow);
+	flow->ux = (double*) calloc(nx*ny,sizeof(double));
 	flow->fIn = (double*) malloc(nx*ny*9* sizeof(double));
-	memcpy(flow->fIn,flow->fOut,nx*ny*9*sizeof(double));
+	initFOut(lc,flow);
 	
 	//Initialize thread data
 	nThreads = params->nThreads;
@@ -180,6 +200,7 @@ void initialize(FlowData* flow, SimParams* params, LatticeConsts* lc, ThreadData
 		(*tdata)[i].params = params;
 		(*tdata)[i].lc = lc;
 		(*tdata)[i].flow = flow;
+		(*tdata)[i].bcdata = bcdata;
 		(*tdata)[i].startX = i*(((float) nx)/nThreads);
 		(*tdata)[i].endX = (i+1)*(((float) nx)/nThreads)-1;
 	}

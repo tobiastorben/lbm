@@ -1,11 +1,10 @@
 #include "boundaries.h"
 
 
-void southXY(FlowData* flow, LatticeConsts * lc, SimParams* params,int startX, int endX) {
-	double *fIn,*rho,uyBC, uxBC;
+void southXY(FlowData* flow, LatticeConsts * lc,int startX, int endX, double uxBC, double uyBC) {
+	double *fIn,*rho;
 	int nx,ny,nxny;
-	
-	uyBC = 0.0; uxBC = 0.05;
+
 	fIn = flow->fIn;
 	rho = flow->rho;
 	nx = lc->nx;
@@ -23,11 +22,10 @@ void southXY(FlowData* flow, LatticeConsts * lc, SimParams* params,int startX, i
 	}
 }
 
-void southPX(FlowData* flow, LatticeConsts * lc, SimParams* params,int startX, int endX) {
-	double *fIn,*uy,rhoBC, uxBC;
+void southPX(FlowData* flow, LatticeConsts * lc,int startX, int endX, double rhoBC, double uxBC) {
+	double *fIn,*uy;
 	int nx,ny,nxny;
 	
-	rhoBC = 1.0; uxBC = 0.0;
 	fIn = flow->fIn;
 	uy = flow->uy;
 	nx = lc->nx;
@@ -47,11 +45,10 @@ void southPX(FlowData* flow, LatticeConsts * lc, SimParams* params,int startX, i
 }
 
 
-void northXY(FlowData* flow, LatticeConsts * lc, SimParams* params,int startX, int endX) {
-	double *fIn,*rho,uyBC, uxBC;
+void northXY(FlowData* flow, LatticeConsts* lc,int startX, int endX, double uxBC, double uyBC) {
+	double *fIn,*rho;
 	int nx,ny,nxny;
 	
-	uyBC = 0; uxBC = 0.05;
 	fIn = flow->fIn;
 	rho = flow->rho;
 	nx = lc->nx;
@@ -69,11 +66,10 @@ void northXY(FlowData* flow, LatticeConsts * lc, SimParams* params,int startX, i
 	}
 }
 
-void northPX(FlowData* flow, LatticeConsts * lc, SimParams* params,int startX, int endX) {
-	double *fIn,*uy,rhoBC,uxBC;
+void northPX(FlowData* flow, LatticeConsts * lc,int startX, int endX, double rhoBC, double uxBC) {
+	double *fIn,*uy;
 	int nx,ny,nxny;
-	
-	rhoBC = 1.01; uxBC = 0;
+
 	fIn = flow->fIn;
 	uy = flow->uy;
 	nx = lc->nx;
@@ -91,10 +87,10 @@ void northPX(FlowData* flow, LatticeConsts * lc, SimParams* params,int startX, i
 	}
 }
 
-void westXY(FlowData* flow, LatticeConsts* lc, SimParams* params) {
-	double sum1, sum2, rhoJ,*fIn,uxBC, uyBC;
+void westXY(FlowData* flow, LatticeConsts* lc, double uxBC, double uyBC) {
+	double sum1, sum2, rhoJ,*fIn;
 	int nx,ny;
-	uxBC = 0.0;uyBC = 0.0;
+
 	nx = lc->nx;
 	ny = lc->ny;	
 	fIn = flow->fIn;
@@ -112,10 +108,10 @@ void westXY(FlowData* flow, LatticeConsts* lc, SimParams* params) {
 	}
 }
 
-void westPY(FlowData* flow, LatticeConsts* lc, SimParams* params) {
-	double sum1,sum2,*fIn,*ux,rhoBC, uyBC;
+void westPY(FlowData* flow, LatticeConsts* lc, double rhoBC, double uyBC) {
+	double sum1,sum2,*fIn,*ux;
 	int nx,ny;
-	rhoBC = 1;uyBC = 0.0;
+
 	nx = lc->nx;
 	ny = lc->ny;	
 	fIn = flow->fIn;
@@ -133,15 +129,14 @@ void westPY(FlowData* flow, LatticeConsts* lc, SimParams* params) {
 	}
 }
 
-void eastPY(FlowData* flow, LatticeConsts* lc) {
-	double sum1,sum2,*fIn,rhoBC,uyBC,*ux;
+void eastPY(FlowData* flow, LatticeConsts* lc, double rhoBC, double uyBC) {
+	double sum1,sum2,*fIn,*ux;
 	int nx,ny;
 	
 	nx = lc->nx;
 	ny = lc->ny;	
 	fIn = flow->fIn;
 	ux = flow->ux;
-	rhoBC = 1.01;uyBC = 0.0;
 	
 	for (int j = 1; j < (ny-1);j++) {
 		flow->rho[(nx-1)*ny +j] = rhoBC;
@@ -155,14 +150,13 @@ void eastPY(FlowData* flow, LatticeConsts* lc) {
 	}
 }
 
-void eastXY(FlowData* flow, LatticeConsts* lc) {
-	double sum1,sum2,*fIn,uxBC,uyBC,rhoJ;
+void eastXY(FlowData* flow, LatticeConsts* lc, double uxBC, double uyBC) {
+	double sum1,sum2,*fIn,rhoJ;
 	int nx,ny;
 	
 	nx = lc->nx;
 	ny = lc->ny;
 	fIn = flow->fIn;
-	uxBC = 0.0;uyBC = 0.0;
 	
 	for (int j = 1; j < (ny-1);j++) {
 		flow->ux[(nx-1)*ny +j] = uxBC;
@@ -177,7 +171,7 @@ void eastXY(FlowData* flow, LatticeConsts* lc) {
 	}
 }
 
-void bounce(FlowData* flow, LatticeConsts* lc, SimParams* params){
+void bounce(FlowData* flow, LatticeConsts* lc, SimParams* params) {
 	int i,j,k,l,nx,ny,*opp;
 	
 	nx = lc->nx;

@@ -74,7 +74,7 @@ void writeU(double* u, int n, int m, double c, char* path) {
 	fp = fopen(path,"w");
 	for (int i = 0; i < n; i++){
 		for (int j = 0; j < m; j++){
-		fprintf(fp,"%.3e",u[m*i + j]);//TODO : Insert c
+		fprintf(fp,"%.3e",c*u[m*i + j]);
 		if (j != m-1) fprintf(fp,",");
 		}
 	if (i != (n-1)) fprintf(fp,"\n");

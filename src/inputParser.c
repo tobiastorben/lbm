@@ -1,14 +1,17 @@
 #include "inputParser.h"
 
-int parseInput(char* inPath, SimParams* params) {
-	FILE* fp = fopen(inPath,"r");
-	char* line =  (char*) malloc(1000);
+int parseInput(char* inPath, SimParams* params, BoundaryData* bcdata) {
+	FILE* fp;
+	char *line,*token;
+	int *outputSelect,count,outDirIsSet;
+	
+	fp = fopen(inPath,"r");
+	line =  (char*) malloc(1000);
 	params->obstaclePath = (char*) malloc(1000);
 	params->outDir = (char*) malloc(1000);
-	int* outputSelect =  (int*) calloc(5,sizeof(int));
-	char* token;
-	int count = 0;
-	int outDirIsSet = 0;
+	outputSelect =  (int*) calloc(5,sizeof(int));
+	count = 0;
+	outDirIsSet = 0;
 	
 	while (!feof(fp)){
 		fgets(line,1000,fp);
@@ -31,6 +34,11 @@ int parseInput(char* inPath, SimParams* params) {
 			count++;
 		}
 		
+		else if(!strcmp(token,"uRef")){
+			params->uRef = atof(strtok(NULL, "="));
+			count++;
+		}
+		
 		else if(!strcmp(token,"viscosity")){
 			params->nuPhys = atof(strtok(NULL, "="));
 			count++;
@@ -38,11 +46,6 @@ int parseInput(char* inPath, SimParams* params) {
 		
 		else if(!strcmp(token,"density")){
 			params->rhoPhys = atof(strtok(NULL, "="));
-			count++;
-		}
-		
-		else if(!strcmp(token,"inletVel")){
-			params->u0Phys= atof(strtok(NULL, "="));
 			count++;
 		}
 		
@@ -90,13 +93,72 @@ int parseInput(char* inPath, SimParams* params) {
 					outputSelect[4] = 1;
 				}
 				token = strtok(NULL, ",\r\n");				
-		}
+			}
 		}
 		
-	}
+		else if(!strcmp(token,"west")){
+			token = strtok(NULL, ",\r\n");
+			if (!strcmp(token,"pres")) {
+				bcdata->westFun = &westPY;
+				bcdata->westBCType = 1;
+			}
+			else {
+				bcdata->westFun = &westXY;
+				bcdata->westBCType = 0;
+			}
+			bcdata->westBC[0] = atof(strtok(NULL, ",\r\n"));
+			bcdata->westBC[1] = atof(strtok(NULL, ",\r\n"));	
+			count++;
+			}
+
+			else if(!strcmp(token,"north")){
+			token = strtok(NULL, ",\r\n");
+			if (!strcmp(token,"pres")) {
+				bcdata->northFun = &northPX;
+				bcdata->northBCType = 1;
+			}
+			else {
+				bcdata->northFun = &northXY;
+				bcdata->northBCType = 0;
+			}
+			bcdata->northBC[0] = atof(strtok(NULL, ",\r\n"));
+			bcdata->northBC[1] = atof(strtok(NULL, ",\r\n"));	
+			count++;
+			}
+			
+			else if(!strcmp(token,"east")){
+			token = strtok(NULL, ",\r\n");
+			if (!strcmp(token,"pres")) {
+				bcdata->eastFun = &eastPY;
+				bcdata->eastBCType = 1;
+			}
+			else {
+				bcdata->eastFun = &eastXY;
+				bcdata->eastBCType = 0;
+			}
+			bcdata->eastBC[0] = atof(strtok(NULL, ",\r\n"));
+			bcdata->eastBC[1] = atof(strtok(NULL, ",\r\n"));	
+			count++;
+			}
+			
+			else if(!strcmp(token,"south")){
+			token = strtok(NULL, ",\r\n");
+			if (!strcmp(token,"pres")) {
+				bcdata->southFun = &southPX;
+				bcdata->southBCType = 1;
+			}
+			else {
+				bcdata->southFun = &southXY;
+				bcdata->southBCType = 0;
+			}
+			bcdata->southBC[0] = atof(strtok(NULL, ",\r\n"));
+			bcdata->southBC[1] = atof(strtok(NULL, ",\r\n"));	
+			count++;
+			}
+		}		
 	if (!outDirIsSet) strcpy(params->outDir,"../res");
 	params->outputSelect=outputSelect;
 	free(line);
 	fclose(fp);
-	return !(count == 10);
+	return !(count == 14);
 }

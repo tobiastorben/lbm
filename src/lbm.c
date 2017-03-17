@@ -6,6 +6,7 @@ int main(int argc, char* argv[]) {
 	LatticeConsts lc;
 	ThreadData* tdata;
 	PrintData pdata;
+	BoundaryData bcdata;
 	pthread_t printThread;
 	struct timeval begin, end;
 	int iter;
@@ -20,7 +21,7 @@ int main(int argc, char* argv[]) {
 	}
 	
 	//Initialize simulation
-	initialize(&flow,&params,&lc,&tdata,&pdata,inPath);
+	initialize(&flow,&params,&lc,&tdata,&pdata,&bcdata,inPath);
 	//Time execution	
 	gettimeofday(&begin, NULL);
 	

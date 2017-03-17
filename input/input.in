@@ -15,27 +15,42 @@ dx=0.01
 %Time step
 dt=0.01
 
+%Refrence velocity (For computing Reynolds Number, Lattice Mach number and non-dimensionalization)
+uRef=0.2;
+
 %Fluid viscosity
-viscosity=0.0002
+viscosity=0.01
 
 %Fluid density
 density=1000
 
-%Inlet velocity
-inletVel=0.0001
+%BC format:
+	%Pressure BC: pres,<pressure>,<tangential velocity>
+	%Velocity BC: vel,<X-velocity>,<Y-velocity>
+
+%West BC
+west=pres,20,0
+
+%North BC
+north=vel,0,0
+
+%East BC
+east=pres,0,0
+
+%South BC
+south=vel,0,0
 
 %Number of interations
 nIter=5000
 
 %Number of iterations between each result write
-cyclesPerWrite=1
+cyclesPerWrite=5000
 
 %Number of iteration before result writing starts
 startWrite=5000
 
 %Results to be written (NB! Frequent writing of field variables will slow down the execution considerably)
 %Availiable options: X-velocity (ux), Y-velocity (uy), Pressure (p), Vorticity (vorticity), Lift and Drag (F)
-%The final value for all variables will always be written
 outputSelect=ux,uy
 
 %Output directory (Default: ../res)

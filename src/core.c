@@ -23,35 +23,38 @@ void step(FlowData* flow, LatticeConsts* lc, SimParams* params, ThreadData* tdat
 
 void* updateBlock(void* tdata_void) {
 	ThreadData* tdata = (ThreadData*) tdata_void;
+	BoundaryData* bcdata = tdata->bcdata;
 	//streamBlockInterior(tdata->flow,tdata->lc,tdata->startX,tdata->endX);
 	updateRho(tdata->flow,tdata->lc,tdata->startX,tdata->endX);		
 	updateU(tdata->flow,tdata->lc,tdata->startX,tdata->endX);
-	southXY(tdata->flow,tdata->lc,tdata->params,tdata->startX,tdata->endX);
-	northXY(tdata->flow,tdata->lc,tdata->params,tdata->startX,tdata->endX);
+	(*(bcdata->southFun))(tdata->flow,tdata->lc,tdata->startX,tdata->endX,bcdata->southBC[0], bcdata->southBC[1]);
+	(*(bcdata->northFun))(tdata->flow,tdata->lc,tdata->startX,tdata->endX,bcdata->northBC[0], bcdata->northBC[1]);
 	collide(tdata->flow,tdata->lc,tdata->params,tdata->startX,tdata->endX);
 	return NULL;
 }
 
 void* updateFirstBlock(void* tdata_void) {
 	ThreadData* tdata = (ThreadData*) tdata_void;
+	BoundaryData* bcdata = tdata->bcdata;
 	//streamBlockInterior(tdata->flow,tdata->lc,tdata->startX,tdata->endX);
 	updateRho(tdata->flow,tdata->lc,tdata->startX,tdata->endX);		
 	updateU(tdata->flow,tdata->lc,tdata->startX,tdata->endX);
-	southXY(tdata->flow,tdata->lc,tdata->params,tdata->startX,tdata->endX);
-	northXY(tdata->flow,tdata->lc,tdata->params,tdata->startX,tdata->endX);
-	westXY(tdata->flow,tdata->lc,tdata->params);//Poiseuille (Zou/He)		
+	(*(bcdata->southFun))(tdata->flow,tdata->lc,tdata->startX,tdata->endX,bcdata->southBC[0], bcdata->southBC[1]);
+	(*(bcdata->northFun))(tdata->flow,tdata->lc,tdata->startX,tdata->endX,bcdata->northBC[0], bcdata->northBC[1]);
+	(*(bcdata->westFun))(tdata->flow,tdata->lc,bcdata->westBC[0], bcdata->westBC[1]);	
 	collide(tdata->flow,tdata->lc,tdata->params,tdata->startX,tdata->endX);
 	return NULL;
 }
 
 void* updateLastBlock(void* tdata_void) {
 	ThreadData* tdata = (ThreadData*) tdata_void;
+	BoundaryData* bcdata = tdata->bcdata;
 	//streamBlockInterior(tdata->flow,tdata->lc,tdata->startX,tdata->endX);
 	updateRho(tdata->flow,tdata->lc,tdata->startX,tdata->endX);		
 	updateU(tdata->flow,tdata->lc,tdata->startX,tdata->endX);
-	southXY(tdata->flow,tdata->lc,tdata->params,tdata->startX,tdata->endX);
-	northXY(tdata->flow,tdata->lc,tdata->params,tdata->startX,tdata->endX);
-	eastXY(tdata->flow,tdata->lc);//Constant pressure (Zou/He)
+	(*(bcdata->southFun))(tdata->flow,tdata->lc,tdata->startX,tdata->endX,bcdata->southBC[0], bcdata->southBC[1]);
+	(*(bcdata->northFun))(tdata->flow,tdata->lc,tdata->startX,tdata->endX,bcdata->northBC[0], bcdata->northBC[1]);
+	(*(bcdata->eastFun))(tdata->flow,tdata->lc,bcdata->eastBC[0], bcdata->eastBC[1]);
 	collide(tdata->flow,tdata->lc,tdata->params,tdata->startX,tdata->endX);
 	return NULL;
 }

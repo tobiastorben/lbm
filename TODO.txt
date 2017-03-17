@@ -1,6 +1,6 @@
 -Priority:
 Fix streaming at boundaries (Make shift arrays?)
-More general BC's
+Find out why pouiseuille is wrong
 
 -Secondary:
 Visualize with OpenGL

@@ -10,7 +10,7 @@ typedef struct {
 
 typedef struct {
 	int nIter,cyclesPerWrite,startWrite,nBBcells,nThreads,*bbCellMat,*bbCells,*outputSelect;
-	double u0,u0Phys,dxPhys,dtPhys,nuPhys,rhoPhys,tau;
+	double uRef,dxPhys,dtPhys,nuPhys,rhoPhys,tau;
 	char *outDir, *obstaclePath;
 } SimParams;
 
@@ -19,10 +19,20 @@ double *rho,*ux,*uy,*fIn,*fOut;
 } FlowData;
 
 typedef struct {
+	void (*westFun)(FlowData*,LatticeConsts*,double,double);
+	void (*northFun)(FlowData*,LatticeConsts*,int,int,double,double);
+	void (*eastFun)(FlowData*,LatticeConsts*,double,double);
+	void (*southFun)(FlowData*,LatticeConsts*,int,int,double,double);
+	double westBC[2],northBC[2],eastBC[2],southBC[2];	
+	int westBCType,northBCType,eastBCType,southBCType;
+} BoundaryData;
+
+typedef struct {
 	pthread_t thread;
 	LatticeConsts* lc;
 	SimParams* params;
 	FlowData* flow;
+	BoundaryData* bcdata;
 	int startX,endX;
 } ThreadData;
 
@@ -32,12 +42,5 @@ typedef struct {
 	int nx,ny,iter;
 } PrintData;
 
-typedef struct {
-	void (*westFun)(FlowData*,LatticeConsts*);
-	void (*northFun)(FlowData*,LatticeConsts*,int,int);
-	void (*eastFun)(FlowData*,LatticeConsts*);
-	void (*southFun)(FlowData*,LatticeConsts*,int,int);
-	int westBC[2],northBC[2],eastBC[2],southBC[2];	
-} BoundaryData;
 
 #endif
