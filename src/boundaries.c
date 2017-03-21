@@ -95,7 +95,7 @@ void westXY(FlowData* flow, LatticeConsts* lc, double uxBC, double uyBC) {
 	ny = lc->ny;	
 	fIn = flow->fIn;
 
-	for (int j = 1; j < (ny-1);j++) {
+	for (int j = 1; j<ny-1;j++) {
 		flow->ux[j] = uxBC;
 		flow->uy[j] = uyBC;
 		sum1 = fIn[j] + fIn[2*nx*ny +j] + fIn[4*nx*ny+j];
@@ -117,7 +117,7 @@ void westPY(FlowData* flow, LatticeConsts* lc, double rhoBC, double uyBC) {
 	fIn = flow->fIn;
 	ux = flow->ux;
 
-	for (int j = 1; j < (ny-1);j++) {
+	for (int j = 1; j<ny-1; j++) {
 		flow->rho[j] = rhoBC;
 		flow->uy[j] = uyBC;
 		sum1 = fIn[j] + fIn[2*nx*ny +j] + fIn[4*nx*ny+j];
@@ -138,7 +138,7 @@ void eastPY(FlowData* flow, LatticeConsts* lc, double rhoBC, double uyBC) {
 	fIn = flow->fIn;
 	ux = flow->ux;
 	
-	for (int j = 1; j < (ny-1);j++) {
+	for (int j = 1; j<ny-1; j++) {
 		flow->rho[(nx-1)*ny +j] = rhoBC;
 		flow->uy[(nx-1)*ny +j] = uyBC;
 		sum1 = fIn[(nx-1)*ny+j] + fIn[2*nx*ny+(nx-1)*ny+j] + fIn[4*nx*ny+(nx-1)*ny+j];
@@ -158,7 +158,7 @@ void eastXY(FlowData* flow, LatticeConsts* lc, double uxBC, double uyBC) {
 	ny = lc->ny;
 	fIn = flow->fIn;
 	
-	for (int j = 1; j < (ny-1);j++) {
+	for (int j = 1; j<ny-1;j++) {
 		flow->ux[(nx-1)*ny +j] = uxBC;
 		flow->uy[(nx-1)*ny +j] = uyBC;
 		sum1 = fIn[(nx-1)*ny+j] + fIn[2*nx*ny+(nx-1)*ny+j] + fIn[4*nx*ny+(nx-1)*ny+j];

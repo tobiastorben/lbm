@@ -49,6 +49,16 @@ int parseInput(char* inPath, SimParams* params, BoundaryData* bcdata) {
 			count++;
 		}
 		
+		else if(!strcmp(token,"startVelX")){
+			params->startVelX = atof(strtok(NULL, "="));
+			count++;
+		}
+		
+		else if(!strcmp(token,"startVelY")){
+			params->startVelY = atof(strtok(NULL, "="));
+			count++;
+		}
+		
 		else if(!strcmp(token,"nIter")){
 			params->nIter = atoi(strtok(NULL, "="));
 			count++;
@@ -160,5 +170,5 @@ int parseInput(char* inPath, SimParams* params, BoundaryData* bcdata) {
 	params->outputSelect=outputSelect;
 	free(line);
 	fclose(fp);
-	return !(count == 14);
+	return !(count == 16);
 }

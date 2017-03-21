@@ -1,6 +1,7 @@
 -Priority:
 Fix streaming at boundaries (Make shift arrays?)
-Find out why pouiseuille is wrong
+Set obstacle vel = 0
+Wall BC
 
 -Secondary:
 Visualize with OpenGL

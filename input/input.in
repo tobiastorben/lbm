@@ -10,44 +10,48 @@ obstaclePath=../obstacleMasks/testmask.mask
 nThreads=4
 
 %Spatial discretization step
-dx=0.01
+dx=0.0078125
 
 %Time step
-dt=0.01
+dt=0.002
 
 %Refrence velocity (For computing Reynolds Number, Lattice Mach number and non-dimensionalization)
-uRef=0.2;
+uRef=1
 
 %Fluid viscosity
-viscosity=0.01
+viscosity=0.001
 
 %Fluid density
 density=1000
 
-%BC format:
-	%Pressure BC: pres,<pressure>,<tangential velocity>
-	%Velocity BC: vel,<X-velocity>,<Y-velocity>
+%ICs
+startVelX=0
+startVelY=0
+
+%BCs
+%Format: %Pressure BC: pres,<pressure>,<tangential velocity>
+		 %Velocity BC: vel,<X-velocity>,<Y-velocity>
 
 %West BC
-west=pres,20,0
+west=vel,0,0
 
 %North BC
-north=vel,0,0
+north=vel,1,0
 
 %East BC
-east=pres,0,0
+east=vel,0,0
 
 %South BC
 south=vel,0,0
 
-%Number of interations
-nIter=5000
+%Number of iterations
+nIter=10000
 
 %Number of iterations between each result write
-cyclesPerWrite=5000
+cyclesPerWrite=10000
 
 %Number of iteration before result writing starts
-startWrite=5000
+startWrite=10000
 
 %Results to be written (NB! Frequent writing of field variables will slow down the execution considerably)
 %Availiable options: X-velocity (ux), Y-velocity (uy), Pressure (p), Vorticity (vorticity), Lift and Drag (F)

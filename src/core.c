@@ -1,5 +1,4 @@
 #include "core.h"
-#include <stdio.h>
 
 void step(FlowData* flow, LatticeConsts* lc, SimParams* params, ThreadData* tdata) {
 	int nThreads = params->nThreads;
@@ -36,7 +35,7 @@ void* updateBlock(void* tdata_void) {
 void* updateFirstBlock(void* tdata_void) {
 	ThreadData* tdata = (ThreadData*) tdata_void;
 	BoundaryData* bcdata = tdata->bcdata;
-	//streamBlockInterior(tdata->flow,tdata->lc,tdata->startX,tdata->endX);
+	//streamFirstBlockInterior(tdata->flow,tdata->lc,tdata->endX);
 	updateRho(tdata->flow,tdata->lc,tdata->startX,tdata->endX);		
 	updateU(tdata->flow,tdata->lc,tdata->startX,tdata->endX);
 	(*(bcdata->southFun))(tdata->flow,tdata->lc,tdata->startX,tdata->endX,bcdata->southBC[0], bcdata->southBC[1]);
@@ -49,7 +48,7 @@ void* updateFirstBlock(void* tdata_void) {
 void* updateLastBlock(void* tdata_void) {
 	ThreadData* tdata = (ThreadData*) tdata_void;
 	BoundaryData* bcdata = tdata->bcdata;
-	//streamBlockInterior(tdata->flow,tdata->lc,tdata->startX,tdata->endX);
+	//streamLastBlockInterior(tdata->flow,tdata->lc,tdata->startX);
 	updateRho(tdata->flow,tdata->lc,tdata->startX,tdata->endX);		
 	updateU(tdata->flow,tdata->lc,tdata->startX,tdata->endX);
 	(*(bcdata->southFun))(tdata->flow,tdata->lc,tdata->startX,tdata->endX,bcdata->southBC[0], bcdata->southBC[1]);
@@ -91,19 +90,16 @@ void updateU(FlowData* flow, LatticeConsts* lc, int startX, int endX){
 	uy = flow->uy;
 	
 	for (i = startX; i <= endX; i++) {
-		if (i != 0 && i != 199) {
 		for (j = 0; j < ny; j++){
 			sumX = 0;
 			sumY = 0;
 			for (k = 0; k < 9; k++) {
 				sumX += fIn[nxny*k + ny*i + j]*ex[k];
 				sumY += fIn[nxny*k + ny*i + j]*ey[k];
-			}
-		
+			}		
 			ux[ny*i + j] = sumX/rho[ny*i + j];
 			uy[ny*i + j] = sumY/rho[ny*i + j];
-		}
-	} 	
+		}	
 	}	
 }
 
@@ -143,7 +139,7 @@ void collide(FlowData* flow, LatticeConsts* lc, SimParams* params, int startX, i
 }
 
 void streamBlockInterior(FlowData* flow,LatticeConsts* lc,int startX, int endX) {
-	int i,j,k,nx,ny,nxny,*ex,*ey;
+	int i,j,k,l,nx,ny,nxny,*ex,*ey,*northShiftArray,*southShiftArray;
 	double *fIn,*fOut;
 	
 	nx = lc->nx;
@@ -153,6 +149,8 @@ void streamBlockInterior(FlowData* flow,LatticeConsts* lc,int startX, int endX) 
 	ey = lc->eyI;
 	fIn = flow->fIn;
 	fOut = flow->fOut;
+	northShiftArray = lc->northShiftArray;
+	southShiftArray = lc->southShiftArray;
 	
 	//Interior
 	for (i = startX+2; i <= endX; i++) {
@@ -161,11 +159,18 @@ void streamBlockInterior(FlowData* flow,LatticeConsts* lc,int startX, int endX) 
 				fIn[nxny*k+ny*i+j] = fOut[k*nxny+(i-ex[k])*ny +j-ey[k]];
 			}
 		}
-	}	
+		//North/South boundary
+		for (l = 0; l < 6; l++) {
+			k = northShiftArray[l];
+			fIn[nxny*k+ny*i+ny-1] = fOut[k*nxny+(i-ex[k])*ny +ny-1-ey[k]];
+			k = southShiftArray[l];
+			fIn[nxny*k+ny*i] = fOut[k*nxny+(i-ex[k])*ny-ey[k]];
+		}
+	}		
 }
 
-void streamBlockBoundaries(FlowData* flow,LatticeConsts* lc,SimParams* params){
-	int i,j,k,nx,ny,nxny,*ex,*ey,blockSize,nThreads;
+void streamFirstBlockInterior(FlowData* flow,LatticeConsts* lc,int endX) {
+	int i,j,k,l,nx,ny,nxny,*ex,*ey,*northShiftArray,*southShiftArray,*westShiftArray;
 	double *fIn,*fOut;
 	
 	nx = lc->nx;
@@ -173,6 +178,109 @@ void streamBlockBoundaries(FlowData* flow,LatticeConsts* lc,SimParams* params){
 	nxny = nx*ny;
 	ex = lc->exI;
 	ey = lc->eyI;
+	fIn = flow->fIn;
+	fOut = flow->fOut;
+	northShiftArray = lc->northShiftArray;
+	southShiftArray = lc->southShiftArray;
+	westShiftArray = lc->westShiftArray;
+	
+	//Interior
+	for (i = 1; i <= endX; i++) {
+		for (j = 1; j < ny-1; j++) {
+			for (k = 0; k < 9; k++) {
+				fIn[nxny*k+ny*i+j] = fOut[k*nxny+(i-ex[k])*ny +j-ey[k]];
+			}
+		}
+		//North/South nodes
+		for (l = 0; l < 6; l++) {
+			k = northShiftArray[l];
+			fIn[nxny*k+ny*i+ny-1] = fOut[k*nxny+(i-ex[k])*ny +ny-1-ey[k]];
+			k = southShiftArray[l];
+			fIn[nxny*k+ny*i] = fOut[k*nxny+(i-ex[k])*ny-ey[k]];
+		}
+	}
+	
+	//West nodes
+	for (j = 1; j < ny-1; j++) {
+		for (l = 0; l < 6; l++) {
+			k = westShiftArray[l];
+			fIn[nxny*k+j] = fOut[k*nxny-ex[k]*ny+j-ey[k]];
+		}
+	}
+	//Bottom
+	fIn[nxny*0] = fOut[0*nxny-ex[0]*ny-ey[0]];
+	fIn[nxny*3] = fOut[3*nxny-ex[3]*ny-ey[3]];
+	fIn[nxny*4] = fOut[4*nxny-ex[4]*ny-ey[4]];
+	fIn[nxny*7] = fOut[7*nxny-ex[7]*ny-ey[7]];
+	//Top: 0,1,4,8
+	fIn[nxny*0+ny-1] = fOut[0*nxny-ex[0]*ny +ny-1-ey[0]];
+	fIn[nxny*2+ny-1] = fOut[2*nxny-ex[2]*ny +ny-1-ey[2]];
+	fIn[nxny*3+ny-1] = fOut[3*nxny-ex[3]*ny +ny-1-ey[3]];
+	fIn[nxny*6+ny-1] = fOut[6*nxny-ex[6]*ny +ny-1-ey[6]];	
+}
+
+void streamLastBlockInterior(FlowData* flow,LatticeConsts* lc, int startX) {
+	int i,j,k,l,nx,ny,nxny,*ex,*ey,*northShiftArray,*southShiftArray,*eastShiftArray;
+	double *fIn,*fOut;
+	
+	nx = lc->nx;
+	ny = lc->ny;
+	nxny = nx*ny;
+	ex = lc->exI;
+	ey = lc->eyI;
+	fIn = flow->fIn;
+	fOut = flow->fOut;
+	northShiftArray = lc->northShiftArray;
+	southShiftArray = lc->southShiftArray;
+	eastShiftArray = lc->eastShiftArray;
+	
+	//Interior
+	for (i = startX; i < nx-1; i++) {
+		for (j = 1; j < ny-1; j++) {
+			for (k = 0; k < 9; k++) {
+				fIn[nxny*k+ny*i+j] = fOut[k*nxny+(i-ex[k])*ny +j-ey[k]];
+			}
+		}
+		//North/South nodes
+		for (l = 0; l < 6; l++) {
+			k = northShiftArray[l];
+			fIn[nxny*k+ny*i+ny-1] = fOut[k*nxny+(i-ex[k])*ny +ny-1-ey[k]];
+			k = southShiftArray[l];
+			fIn[nxny*k+ny*i] = fOut[k*nxny+(i-ex[k])*ny-ey[k]];
+		}
+	}
+	
+	//East nodes
+	for (j = 1; j < ny-1; j++) {
+		for (l = 0; l < 6; l++) {
+			k = eastShiftArray[l];
+			fIn[nxny*k+ny*(nx-1)+j] = fOut[k*nxny+(nx-1-ex[k])*ny +j-ey[k]];
+		}
+	}
+
+	//Bottom: 0,2,3,6
+	fIn[nxny*0+ny*(nx-1)] = fOut[0*nxny+(nx-1-ex[0])*ny-ey[0]];
+	fIn[nxny*1+ny*(nx-1)] = fOut[1*nxny+(nx-1-ex[1])*ny-ey[1]];
+	fIn[nxny*4+ny*(nx-1)] = fOut[4*nxny+(nx-1-ex[4])*ny-ey[4]];
+	fIn[nxny*8+ny*(nx-1)] = fOut[8*nxny+(nx-1-ex[8])*ny-ey[8]];
+	//Top: 0,3,4,7
+	fIn[nxny*0+ny*(nx-1)+ny-1] = fOut[0*nxny+(nx-1-ex[0])*ny +ny-1-ey[0]];
+	fIn[nxny*1+ny*(nx-1)+ny-1] = fOut[1*nxny+(nx-1-ex[1])*ny +ny-1-ey[1]];
+	fIn[nxny*2+ny*(nx-1)+ny-1] = fOut[2*nxny+(nx-1-ex[2])*ny +ny-1-ey[2]];
+	fIn[nxny*5+ny*(nx-1)+ny-1] = fOut[5*nxny+(nx-1-ex[5])*ny +ny-1-ey[5]];	
+}
+
+void streamBlockBoundaries(FlowData* flow,LatticeConsts* lc,SimParams* params){
+	int i,j,k,l,nx,ny,nxny,*ex,*ey,blockSize,nThreads,*northShiftArray,*southShiftArray;
+	double *fIn,*fOut;
+	
+	nx = lc->nx;
+	ny = lc->ny;
+	nxny = nx*ny;
+	ex = lc->exI;
+	ey = lc->eyI;
+	northShiftArray = lc->northShiftArray;
+	southShiftArray = lc->southShiftArray;
 	fIn = flow->fIn;
 	fOut = flow->fOut;
 	nThreads = params->nThreads;
@@ -184,6 +292,15 @@ void streamBlockBoundaries(FlowData* flow,LatticeConsts* lc,SimParams* params){
 				fIn[nxny*k+ny*i+j] = fOut[k*nxny+(i-ex[k])*ny +j-ey[k]];
 				fIn[nxny*k+ny*(i+1)+j] = fOut[k*nxny+(i+1-ex[k])*ny +j-ey[k]];
 			}
+		}
+		//North/South boundary
+		for (l = 0; l < 6; l++) {
+			k = northShiftArray[l];
+			fIn[nxny*k+ny*i+ny-1] = fOut[k*nxny+(i-ex[k])*ny +ny-1-ey[k]];
+			fIn[nxny*k+ny*(i+1)+ny-1] = fOut[k*nxny+(i+1-ex[k])*ny +ny-1-ey[k]];
+			k = southShiftArray[l];
+			fIn[nxny*k+ny*i] = fOut[k*nxny+(i-ex[k])*ny-ey[k]];
+			fIn[nxny*k+ny*(i+1)] = fOut[k*nxny+(i+1-ex[k])*ny-ey[k]];
 		}
 	}
 }
@@ -212,28 +329,28 @@ void stream(FlowData* flow, LatticeConsts* lc) {
  	//Outlet
  	for (j = 1; j < ny-1; j++) {
  		for (k = 0; k < 9; k++) {
- 			if (ex[k]==-1) 1;//fIn[k*nxny+(nx-1)*ny+j] = fOut[k*nxny+j-ey[k]];
+ 			if (ex[k]==-1) fIn[k*nxny+(nx-1)*ny+j] = fOut[k*nxny+j-ey[k]];
  			else fIn[k*nxny+(nx-1)*ny+j] = fOut[k*nxny + (nx-1-ex[k])*ny+j-ey[k]];
  		}
  	}
  	//Inlet
  	for (j = 1; j < ny-1; j++) {
  		for (k = 0; k < 9; k++) {
- 			if (ex[k]==1) 1;//fIn[k*nxny +j] = fOut[k*nxny+(nx-1)*ny+j-ey[k]];
+ 			if (ex[k]==1) fIn[k*nxny +j] = fOut[k*nxny+(nx-1)*ny+j-ey[k]];
  			else fIn[k*nxny +j] = fOut[k*nxny-ex[k]*ny+j-ey[k]];
  		}
  	}
  	//Top wall
  	for (i = 1; i < nx-1; i++) {
  		for (k = 0; k < 9; k++) {
- 			if (ey[k]==-1) 1;//fIn[k*nxny +i*ny + ny-1] = fOut[k*nxny +(i-ex[k])*ny];
+ 			if (ey[k]==-1) fIn[k*nxny +i*ny + ny-1] = fOut[k*nxny +(i-ex[k])*ny];
  			else fIn[k*nxny +i*ny + ny-1] = fOut[k*nxny +(i-ex[k])*ny +ny-1-ey[k]];
  		}
  	}
  	//Bottom wall
  	for (i = 1; i < nx-1; i++) {
  		for (k = 0; k < 9; k++) {
- 			if (ey[k]==1) 1;//fIn[k*nxny+ny*i] = fOut[k*nxny +(i-ex[k])*ny+ny-1];
+ 			if (ey[k]==1) fIn[k*nxny+ny*i] = fOut[k*nxny +(i-ex[k])*ny+ny-1];
  			else fIn[k*nxny + ny*i] = fOut[k*nxny + (i-ex[k])*ny-ey[k]];
  		}
  	}
@@ -268,7 +385,7 @@ void stream(FlowData* flow, LatticeConsts* lc) {
  	for (k = 0; k < 9; k++) {
  			if (ex[k]==1){
  				if (ey[k]==1) fIn[k*nxny] = fOut[k*nxny+(nx-1)*ny+ny-1];
- 				else fIn[k*nxny] = fOut[k*nxny+(nx-1)*ny+-ey[k]];
+ 				else fIn[k*nxny] = fOut[k*nxny+(nx-1)*ny -ey[k]];
  				}
  			else if (ey[k]==1) fIn[k*nxny] = fOut[k*nxny-ex[k]*ny+ny-1];
  			else fIn[k*nxny] = fOut[k*nxny-ex[k]*ny-ey[k]];

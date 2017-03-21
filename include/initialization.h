@@ -10,6 +10,8 @@
 #include <pthread.h>
 
 void mapObstacleCells(LatticeConsts* lc, SimParams* params);
+void initUx(LatticeConsts* lc, FlowData* flow, SimParams* params);
+void initUy(LatticeConsts* lc, FlowData* flow, SimParams* params);
 void initRho(LatticeConsts* lc, FlowData* flow);
 void initFOut(LatticeConsts* lc, FlowData* flow);
 void readObstacle(LatticeConsts* lc, SimParams* params);

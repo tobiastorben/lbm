@@ -5,12 +5,14 @@
 
 typedef struct {
 	double w[9],ex[9],ey[9]; 
-    int nx,ny,exI[9],eyI[9],opposite[9];
+    int nx,ny,exI[9],eyI[9],opposite[9],
+	westShiftArray[6],northShiftArray[6],eastShiftArray[6],southShiftArray[6];
+	
 } LatticeConsts;
 
 typedef struct {
 	int nIter,cyclesPerWrite,startWrite,nBBcells,nThreads,*bbCellMat,*bbCells,*outputSelect;
-	double uRef,dxPhys,dtPhys,nuPhys,rhoPhys,tau;
+	double startVelX,startVelY,uRef,dxPhys,dtPhys,nuPhys,rhoPhys,tau;
 	char *outDir, *obstaclePath;
 } SimParams;
 
