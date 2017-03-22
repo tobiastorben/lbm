@@ -135,7 +135,7 @@ void nonDimensionalize(LatticeConsts* lc, SimParams* params, BoundaryData* bcdat
 	
 	scale = (params->dtPhys)/(params->dxPhys);
 	rhoPhys = params->rhoPhys;
-	width = (params->dxPhys)*(lc->ny);
+	width = (params->dxPhys)*((lc->ny)-1);
 	t0 = width/(params->uRef);
 	Re = width*(params->uRef)/(params->nuPhys);
 	dx = 1.0/(lc->ny);
@@ -190,7 +190,6 @@ void nonDimensionalize(LatticeConsts* lc, SimParams* params, BoundaryData* bcdat
 	printf("Reynolds number (based on domain length in Y-direction): %.1f\n", Re);
 	printf("Lattice Mach number (based on refrance velocity): %.3f\n", (u0)*sqrt(3.0));
 	printf("Speed/Accuracy ratio: %.2f\n", dt/(dx*dx));
-	printf("LB dt: %.3e\n", dt);
 	printf("Relaxation time: %.2f\n\n", params->tau);
 	
 	return;
@@ -239,6 +238,7 @@ void initialize(FlowData* flow, SimParams* params, LatticeConsts* lc, ThreadData
 		(*tdata)[i].startX = i*(((float) nx)/nThreads);
 		(*tdata)[i].endX = (i+1)*(((float) nx)/nThreads)-1;
 	}
+	(*tdata)[nThreads-1].endX = nx-1;
 
 	//Initialize print data
 	pdata->uxCpy = (double*) malloc(nx*ny*sizeof(double));

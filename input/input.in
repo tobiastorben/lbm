@@ -5,8 +5,7 @@
 %Path to obstacle file
 obstaclePath=../obstacleMasks/testmask.mask
 
-%Number of threads for solving flow. Should be divisable with number of grid points in x direction, minimum 2
-%Threads for writing output and visualization will come in addition
+%Number of threads for solving flow, minimum 2. One thread for writing output will come in addition
 nThreads=4
 
 %Spatial discretization step

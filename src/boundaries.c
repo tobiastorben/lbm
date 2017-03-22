@@ -88,12 +88,13 @@ void northPX(FlowData* flow, LatticeConsts * lc,int startX, int endX, double rho
 }
 
 void westXY(FlowData* flow, LatticeConsts* lc, double uxBC, double uyBC) {
-	double sum1, sum2, rhoJ,*fIn;
-	int nx,ny;
+	double sum1, sum2, rhoJ,*fIn,*rho;
+	int nx,ny,k;
 
 	nx = lc->nx;
 	ny = lc->ny;	
 	fIn = flow->fIn;
+	rho = flow->rho;
 
 	for (int j = 1; j<ny-1;j++) {
 		flow->ux[j] = uxBC;
@@ -106,16 +107,32 @@ void westXY(FlowData* flow, LatticeConsts* lc, double uxBC, double uyBC) {
 		fIn[8*nx*ny+j] = fIn[6*nx*ny+j] + 0.5*(fIn[2*nx*ny+j]-fIn[4*nx*ny+j]) - 0.5*(rhoJ*uyBC) + (1.0/6)*(rhoJ*uxBC);
 		flow->rho[j] = rhoJ;
 	}
+	//Bottom corner
+	rho[0*ny + 0] = rho[1*ny + 0];
+	flow->ux[0*ny + 0] = flow->ux[1*ny + 0];
+	flow->uy[0*ny + 0] = flow->uy[1*ny + 0];
+	for (k = 0; k < 9; k++){
+	fIn[k*nx*ny + 0*ny + 0] = fIn[k*nx*ny + 1*ny + 0];
+	}
+	
+	//Top corner
+	rho[0*ny + ny-1] = rho[1*ny + ny-1];
+	flow->ux[0*ny + ny-1] = flow->ux[1*ny + ny-1];
+	flow->uy[0*ny + ny-1] = flow->uy[1*ny + ny-1];
+	for (k = 0; k < 9; k++){
+	fIn[k*nx*ny + 0*ny + ny-1] = fIn[k*nx*ny + 1*ny + ny-1];
+	}	
 }
 
 void westPY(FlowData* flow, LatticeConsts* lc, double rhoBC, double uyBC) {
-	double sum1,sum2,*fIn,*ux;
-	int nx,ny;
+	double sum1,sum2,*fIn,*ux,*rho;
+	int nx,ny,k;
 
 	nx = lc->nx;
 	ny = lc->ny;	
 	fIn = flow->fIn;
 	ux = flow->ux;
+	rho = flow->rho;
 
 	for (int j = 1; j<ny-1; j++) {
 		flow->rho[j] = rhoBC;
@@ -127,16 +144,33 @@ void westPY(FlowData* flow, LatticeConsts* lc, double rhoBC, double uyBC) {
 		fIn[5*nx*ny+j] = fIn[7*nx*ny+j] + 0.5*(fIn[4*nx*ny+j]-fIn[2*nx*ny+j]) + 0.5*(rhoBC*uyBC) + (1.0/6)*(rhoBC*ux[j]);
 		fIn[8*nx*ny+j] = fIn[6*nx*ny+j] + 0.5*(fIn[2*nx*ny+j]-fIn[4*nx*ny+j]) - 0.5*(rhoBC*uyBC) + (1.0/6)*(rhoBC*ux[j]);
 	}
+	
+	//Bottom corner
+	rho[0*ny + 0] = rho[1*ny + 0];
+	flow->ux[0*ny + 0] = flow->ux[1*ny + 0];
+	flow->uy[0*ny + 0] = flow->uy[1*ny + 0];
+	for (k = 0; k < 9; k++){
+	fIn[k*nx*ny + 0*ny + 0] = fIn[k*nx*ny + 1*ny + 0];
+	}
+	
+	//Top corner
+	rho[0*ny + ny-1] = rho[1*ny + ny-1];
+	flow->ux[0*ny + ny-1] = flow->ux[1*ny + ny-1];
+	flow->uy[0*ny + ny-1] = flow->uy[1*ny + ny-1];
+	for (k = 0; k < 9; k++){
+	fIn[k*nx*ny + 0*ny + ny-1] = fIn[k*nx*ny + 1*ny + ny-1];
+	}	
 }
 
 void eastPY(FlowData* flow, LatticeConsts* lc, double rhoBC, double uyBC) {
-	double sum1,sum2,*fIn,*ux;
-	int nx,ny;
+	double sum1,sum2,*fIn,*ux,*rho;
+	int nx,ny,k;
 	
 	nx = lc->nx;
 	ny = lc->ny;	
 	fIn = flow->fIn;
 	ux = flow->ux;
+	rho = flow->rho;
 	
 	for (int j = 1; j<ny-1; j++) {
 		flow->rho[(nx-1)*ny +j] = rhoBC;
@@ -148,26 +182,58 @@ void eastPY(FlowData* flow, LatticeConsts* lc, double rhoBC, double uyBC) {
 		fIn[7*nx*ny+(nx-1)*ny + j] = fIn[5*nx*ny+(nx-1)*ny + j] + 0.5*(fIn[2*nx*ny+(nx-1)*ny + j]-fIn[4*nx*ny+(nx-1)*ny + j]) - 0.5*rhoBC*uyBC - (1.0/6)*rhoBC*ux[(nx-1)*ny +j];
 		fIn[6*nx*ny+(nx-1)*ny + j] = fIn[8*nx*ny+(nx-1)*ny + j] + 0.5*(fIn[4*nx*ny+(nx-1)*ny + j]-fIn[2*nx*ny+(nx-1)*ny + j]) + 0.5*rhoBC*uyBC - (1.0/6)*rhoBC*ux[(nx-1)*ny +j];
 	}
+	//Bottom corner
+	rho[(nx-1)*ny + 0] = rho[(nx-2)*ny + 0];
+	flow->ux[(nx-1)*ny + 0] = flow->ux[(nx-2)*ny + 0];
+	flow->uy[(nx-1)*ny + 0] = flow->uy[(nx-2)*ny + 0];
+	for (k = 0; k < 9; k++){
+	fIn[k*nx*ny + (nx-1)*ny + 0] = fIn[k*nx*ny + (nx-2)*ny + 0];
+	}
+	
+	//Top corner
+	rho[(nx-1)*ny + ny-1] = rho[(nx-2)*ny + ny-1];
+	flow->ux[(nx-1)*ny + ny-1] = flow->ux[(nx-2)*ny + ny-1];
+	flow->uy[(nx-1)*ny + ny-1] = flow->uy[(nx-2)*ny + ny-1];
+	for (k = 0; k < 9; k++){
+	fIn[k*nx*ny + (nx-1)*ny + ny-1] = fIn[k*nx*ny + (nx-2)*ny + ny-1];
+	}
 }
 
 void eastXY(FlowData* flow, LatticeConsts* lc, double uxBC, double uyBC) {
-	double sum1,sum2,*fIn,rhoJ;
-	int nx,ny;
+	double sum1,sum2,*fIn,*rho,rhoJ;
+	int nx,ny,k;
 	
 	nx = lc->nx;
 	ny = lc->ny;
 	fIn = flow->fIn;
+	rho = flow->rho;
 	
 	for (int j = 1; j<ny-1;j++) {
 		flow->ux[(nx-1)*ny +j] = uxBC;
 		flow->uy[(nx-1)*ny +j] = uyBC;
 		sum1 = fIn[(nx-1)*ny+j] + fIn[2*nx*ny+(nx-1)*ny+j] + fIn[4*nx*ny+(nx-1)*ny+j];
 		sum2 = fIn[1*nx*ny+(nx-1)*ny+j] + fIn[5*nx*ny+(nx-1)*ny+j] + fIn[8*nx*ny+(nx-1)*ny+j];
-		rhoJ = (sum1 + 2.0*sum2)/(1.0-uxBC);
-		fIn[3*nx*ny+(nx-1)*ny + j] = fIn[1*nx*ny+(nx-1)*ny + j] - (2.0/3)*uxBC;
+		rhoJ = (sum1 + 2.0*sum2)/(1.0+uxBC);
+		fIn[3*nx*ny+(nx-1)*ny + j] = fIn[1*nx*ny+(nx-1)*ny + j] - (2.0/3)*rhoJ*uxBC;
 		fIn[7*nx*ny+(nx-1)*ny + j] = fIn[5*nx*ny+(nx-1)*ny + j] + 0.5*(fIn[2*nx*ny+(nx-1)*ny + j]-fIn[4*nx*ny+(nx-1)*ny + j]) - 0.5*rhoJ*uyBC - (1.0/6)*rhoJ*uxBC;
 		fIn[6*nx*ny+(nx-1)*ny + j] = fIn[8*nx*ny+(nx-1)*ny + j] + 0.5*(fIn[4*nx*ny+(nx-1)*ny + j]-fIn[2*nx*ny+(nx-1)*ny + j]) + 0.5*rhoJ*uyBC - (1.0/6)*rhoJ*uxBC;
-		flow->rho[(nx-1)*ny +j] = rhoJ;
+		rho[(nx-1)*ny +j] = rhoJ;
+	}
+	
+	//Bottom corner
+	rho[(nx-1)*ny + 0] = rho[(nx-2)*ny + 0];
+	flow->ux[(nx-1)*ny + 0] = flow->ux[(nx-2)*ny + 0];
+	flow->uy[(nx-1)*ny + 0] = flow->uy[(nx-2)*ny + 0];
+	for (k = 0; k < 9; k++){
+	fIn[k*nx*ny + (nx-1)*ny + 0] = fIn[k*nx*ny + (nx-2)*ny + 0];
+	}
+	
+	//Top corner
+	rho[(nx-1)*ny + ny-1] = rho[(nx-2)*ny + ny-1];
+	flow->ux[(nx-1)*ny + ny-1] = flow->ux[(nx-2)*ny + ny-1];
+	flow->uy[(nx-1)*ny + ny-1] = flow->uy[(nx-2)*ny + ny-1];
+	for (k = 0; k < 9; k++){
+	fIn[k*nx*ny + (nx-1)*ny + ny-1] = fIn[k*nx*ny + (nx-2)*ny + ny-1];
 	}
 }
 
