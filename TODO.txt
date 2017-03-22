@@ -1,8 +1,5 @@
 -Priority:
-Fix streaming at corners
 Set obstacle vel = 0
-Wall BC?
-Remove the need for nthread to be divisable by nx
 
 
 -Secondary:
