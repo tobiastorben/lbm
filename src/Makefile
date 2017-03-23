@@ -2,7 +2,6 @@ CC=gcc
 CFLAGS=-I$(IDIR) -std=c99 -m64 -Ofast -flto -march=native -funroll-loops -Wall -Wextra
 
 ODIR=../obj
-LDIR =../lib
 IDIR =../include
 
 LIBS= -lm -lpthread
@@ -22,4 +21,3 @@ lbm: $(OBJ)
 	
 clean:
 	rm -f $(ODIR)/*
-	rm lbm.exe

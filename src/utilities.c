@@ -198,7 +198,7 @@ void printProgression(int iter, int nIter) {
 
 void writeResults(FlowData* flow, LatticeConsts* lc, int iter, pthread_t* printThread, PrintData* pdata) {
 	int nx,ny;
-	pthread_join(*printThread,NULL);
+	if (iter != pdata->params->startWrite) pthread_join(*printThread,NULL);
 	pdata->iter = iter;
 	nx = lc->nx;
 	ny = lc->ny;
