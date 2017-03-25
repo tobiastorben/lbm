@@ -3,22 +3,22 @@
 %All simulation parameters below must be set to run the program. The order is arbitraty. "%" for comments
 
 %Path to obstacle file
-obstaclePath=../obstacleMasks/fineCavity.mask
+obstaclePath=../obstacleMasks/testmask.mask
 
 %Number of threads for solving flow, minimum 2. One thread for writing output will come in addition
-nThreads=8
+nThreads=3
 
 %Spatial discretization step
-dx=0.002;
+dx=0.0078125;
 
 %Time step
-dt=0.00014
+dt=0.001
 
 %Refrence velocity (For computing Reynolds Number, Lattice Mach number and non-dimensionalization)
 uRef=1
 
 %Fluid viscosity
-viscosity=0.001
+viscosity=0.01
 
 %Fluid density
 density=1000
@@ -47,14 +47,14 @@ south=vel,0,0
 nIter=1000
 
 %Number of iterations between each result write
-cyclesPerWrite=1
+cyclesPerWrite=200
 
 %Number of iteration before result writing starts
 startWrite=1
 
 %Output directory (Default: ../res)
-%outDir=../res/test
+%outDir=../res/cavity_129_re100
 
 %Results to be written (NB! Frequent writing of field variables will slow down the execution considerably)
 %Availiable options: X-velocity (ux), Y-velocity (uy), Pressure (p), Vorticity (vorticity), Lift and Drag (F)
-outputSelect=ux,uy,p
+outputSelect=ux,uy

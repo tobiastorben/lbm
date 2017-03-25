@@ -1,4 +1,5 @@
 obj/*
 *.exe
+src/lbm
 *.stackdump
 *.csv

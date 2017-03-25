@@ -224,7 +224,7 @@ void streamLastBlockInterior(FlowData* flow,LatticeConsts* lc, int startX) {
 	eastShiftArray = lc->eastShiftArray;
 	
 	//Interior
-	for (i = startX; i < nx-1; i++) {
+	for (i = startX+2; i < nx-1; i++) {
 		for (j = 1; j < ny-1; j++) {
 			for (k = 0; k < 9; k++) {
 				fIn[nxny*k+ny*i+j] = fOut[k*nxny+(i-ex[k])*ny +j-ey[k]];
@@ -261,8 +261,7 @@ void streamBlockBoundaries(FlowData* flow,LatticeConsts* lc,SimParams* params){
 	southShiftArray = lc->southShiftArray;
 	fIn = flow->fIn;
 	fOut = flow->fOut;
-	nThreads = params->nThreads;
-	blockSize = nx/nThreads;
+	blockSize = params->blockSize;
 	
 	for (i = blockSize; i < nx-1; i+=blockSize) {
 		for (j = 1; j < ny-1; j++) {

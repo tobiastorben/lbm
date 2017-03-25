@@ -196,7 +196,7 @@ void nonDimensionalize(LatticeConsts* lc, SimParams* params, BoundaryData* bcdat
 }
 
 void initialize(FlowData* flow, SimParams* params, LatticeConsts* lc, ThreadData** tdata, PrintData* pdata, BoundaryData* bcdata, char* inPath) {
-	int nx,ny,i,nThreads;
+	int nx,ny,i,nThreads,rest;
 	pthread_t *threads;
 	
 	printf("Initializing...\n\n");
@@ -228,6 +228,7 @@ void initialize(FlowData* flow, SimParams* params, LatticeConsts* lc, ThreadData
 	//Initialize thread data
 	nThreads = params->nThreads;
 	threads = (pthread_t*) malloc(nThreads*sizeof(pthread_t));	
+	rest = nx % nThreads;
 	*tdata = (ThreadData*) malloc(nThreads*sizeof(ThreadData));
 	for (i = 0; i < nThreads; i++){
 		(*tdata)[i].thread = threads[i];
@@ -235,10 +236,11 @@ void initialize(FlowData* flow, SimParams* params, LatticeConsts* lc, ThreadData
 		(*tdata)[i].lc = lc;
 		(*tdata)[i].flow = flow;
 		(*tdata)[i].bcdata = bcdata;
-		(*tdata)[i].startX = i*(((float) nx)/nThreads);
-		(*tdata)[i].endX = (i+1)*(((float) nx)/nThreads)-1;
+		(*tdata)[i].startX = i*(nx-rest)/nThreads;
+		(*tdata)[i].endX = (i+1)*((nx-rest)/nThreads)-1;
 	}
 	(*tdata)[nThreads-1].endX = nx-1;
+	params->blockSize = (*tdata)[0].endX+1;
 
 	//Initialize print data
 	pdata->uxCpy = (double*) malloc(nx*ny*sizeof(double));

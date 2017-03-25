@@ -20,7 +20,7 @@ int parseInput(char* inPath, SimParams* params, BoundaryData* bcdata) {
 			continue;
 		}
 		else if(!strcmp(token,"obstaclePath")){
-		strcpy(params->obstaclePath,strtok(strtok(NULL, "="),(NULL, "\r")));		
+		strcpy(params->obstaclePath,strtok(strtok(NULL, "="),"\r"));		
 			count++;
 		}
 				
@@ -75,8 +75,8 @@ int parseInput(char* inPath, SimParams* params, BoundaryData* bcdata) {
 		}
 		
 		else if(!strcmp(token,"outDir")){
-			strcpy(params->outDir,strtok(strtok(NULL, "="),(NULL, "\r")));
-			outDirIsSet = 1;
+		strcpy(params->outDir,strtok(strtok(NULL, "="),"\r"));		
+		outDirIsSet = 1;
 		}
 		
 		else if(!strcmp(token,"nThreads")){
