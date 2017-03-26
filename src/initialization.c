@@ -156,7 +156,7 @@ void nonDimensionalize(LatticeConsts* lc, SimParams* params, BoundaryData* bcdat
 	width = (params->dxPhys)*((lc->ny)-1);
 	t0 = width/(params->uRef);
 	Re = width*(params->uRef)/(params->nuPhys);
-	dx = 1.0/(lc->ny);
+	dx = 1.0/(lc->ny-1);
 	dt = (params->dtPhys)/t0;
 	u0 = dt/dx;
 	nu = dt/(dx*dx*Re);
@@ -205,7 +205,7 @@ void nonDimensionalize(LatticeConsts* lc, SimParams* params, BoundaryData* bcdat
 	}
 	
 	printf("Numerical simulation parameters:\n");
-	printf("Reynolds number (based on domain length in Y-direction): %.1f\n", Re);
+	printf("Reynolds number (based on domain length in Y-direction): %7f\n", Re);
 	printf("Lattice Mach number (based on refrance velocity): %.3f\n", (u0)*sqrt(3.0));
 	printf("Speed/Accuracy ratio: %.2f\n", dt/(dx*dx));
 	printf("Relaxation time: %.2f\n\n", params->tau);

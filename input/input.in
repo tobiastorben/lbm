@@ -6,10 +6,10 @@
 obstaclePath=../obstacleMasks/report/square_31.mask
 
 %Number of threads for solving flow, minimum 2. One thread for writing output will come in addition
-nThreads=3
+nThreads=6
 
 %Spatial discretization step
-dx=0.033333333
+dx=0.03333333
 
 %Time step
 dt=0.001
@@ -32,19 +32,19 @@ startVelY=0
 		 %Velocity BC: vel,<X-velocity>,<Y-velocity>
 
 %West BC
-west=vel,0,0
+west=pres,8000,0
 
 %North BC
-north=pres,8000,0
+north=vel,0,0
 
 %East BC
-east=vel,0,0
+east=pres,0,0
 
 %South BC
-south=pres,0,0
+south=vel,0,0
 
 %Number of iterations
-nIter=10000
+nIter=2000
 
 %Number of iterations between each result write
 cyclesPerWrite=1000
@@ -57,4 +57,4 @@ startWrite=1
 
 %Results to be written (NB! Frequent writing of field variables will slow down the execution considerably)
 %Availiable options: X-velocity (ux), Y-velocity (uy), Pressure (p), Vorticity (vorticity), Lift and Drag (F)
-outputSelect=uy
+outputSelect=ux
