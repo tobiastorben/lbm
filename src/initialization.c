@@ -72,7 +72,16 @@ void initUx(LatticeConsts* lc, FlowData* flow, SimParams* params) {
 			ux[(lc->ny)*i + j] = params->startVelX;
 		}
 	}
-flow->ux = ux;	
+	
+	for (i = 0; i < lc->nx; i++){
+		for (j = 0; j < lc->ny; j++){    
+			if (params->bbCellMat[i*(lc->ny) + j]) {
+				ux[(lc->ny)*i + j] = 0.0;
+			}
+	    }
+	}
+	
+	flow->ux = ux;	
 }
 
 void initUy(LatticeConsts* lc, FlowData* flow, SimParams* params) {
@@ -87,7 +96,16 @@ void initUy(LatticeConsts* lc, FlowData* flow, SimParams* params) {
 			uy[(lc->ny)*i + j] = params->startVelY;
 		}
 	}
-flow->uy = uy;	
+	
+	for (i = 0; i < lc->nx; i++){
+		for (j = 0; j < lc->ny; j++){    
+			if (params->bbCellMat[i*(lc->ny) + j]) {
+				uy[(lc->ny)*i + j] = 0.0;
+			}
+	    }
+	}
+	
+	flow->uy = uy;	
 }
 
 
