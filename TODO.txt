@@ -1,7 +1,7 @@
 -Priority:
 -Set up simulations
 	-Couette
-	-Pouseoille
+	-Poiseuille
 	-Cylinder
 		-Re 10,50,100
 		-Se på strømningsregime

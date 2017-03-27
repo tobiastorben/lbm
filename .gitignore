@@ -3,3 +3,4 @@ obj/*
 src/lbm
 *.stackdump
 *.csv
+src/gmon.out

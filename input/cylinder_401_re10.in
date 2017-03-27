@@ -9,16 +9,16 @@ obstaclePath=../obstacleMasks/report/cylinder_401.mask
 nThreads=10
 
 %Spatial discretization step
-dx=0.0025;
+dx=0.0025
 
 %Time step
-dt=0.001
+dt=0.00005
 
 %Refrence velocity (For computing Reynolds Number, Lattice Mach number and non-dimensionalization)
 uRef=1
 
 %Fluid viscosity
-viscosity=0.1
+viscosity=0.0125
 
 %Fluid density
 density=1000
@@ -35,25 +35,25 @@ startVelY=0
 west=vel,1,0
 
 %North BC
-north=vel,0,1
+north=pres,0,1
 
 %East BC
 east=pres,0,0
 
 %South BC
-south=vel,0,0
+south=pres,0,1
 
 %Number of iterations
-nIter=1000
+nIter=50000
 
 %Number of iterations between each result write
-cyclesPerWrite=1000
+cyclesPerWrite=20
 
 %Number of iteration before result writing starts
-startWrite=1000
+startWrite=40000
 
 %Output directory (Default: ../res)
-outDir=../res/poiseuille
+outDir=../res/cylinder_re10
 
 %Results to be written (NB! Frequent writing of field variables will slow down the execution considerably)
 %Availiable options: X-velocity (ux), Y-velocity (uy), Pressure (p), Vorticity (vorticity), Lift and Drag (F)

@@ -3,13 +3,13 @@
 %All simulation parameters below must be set to run the program. The order is arbitraty. "%" for comments
 
 %Path to obstacle file
-obstaclePath=C:\Users\Tobias\Documents\Skule\TMR4160 Datametoder\lbmHelpers\test
+obstaclePath=../obstacleMasks/report/square_31.mask
 
 %Number of threads for solving flow, minimum 2. One thread for writing output will come in addition
-nThreads=4
+nThreads=3
 
 %Spatial discretization step
-dx=0.0322581;
+dx=0.03333333;
 
 %Time step
 dt=0.001
@@ -44,13 +44,13 @@ east=pres,0,0
 south=vel,0,0
 
 %Number of iterations
-nIter=3000
+nIter=1000
 
 %Number of iterations between each result write
-cyclesPerWrite=500
+cyclesPerWrite=1000
 
 %Number of iteration before result writing starts
-startWrite=1
+startWrite=1000
 
 %Output directory (Default: ../res)
 outDir=../res/poiseuille

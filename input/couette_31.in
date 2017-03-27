@@ -6,7 +6,7 @@
 obstaclePath=../obstacleMasks/report/square_31.mask
 
 %Number of threads for solving flow, minimum 2. One thread for writing output will come in addition
-nThreads=10
+nThreads=3
 
 %Spatial discretization step
 dx=0.033333333;
@@ -47,10 +47,10 @@ south=vel,0,0
 nIter=1000
 
 %Number of iterations between each result write
-cyclesPerWrite=100
+cyclesPerWrite=1000
 
 %Number of iteration before result writing starts
-startWrite=100
+startWrite=1000
 
 %Output directory (Default: ../res)
 outDir=../res/couette

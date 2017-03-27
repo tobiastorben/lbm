@@ -3,28 +3,28 @@
 %All simulation parameters below must be set to run the program. The order is arbitraty. "%" for comments
 
 %Path to obstacle file
-obstaclePath=../obstacleMasks/square31.mask
+obstaclePath=../obstacleMasks/report/cylinder_401.mask
 
 %Number of threads for solving flow, minimum 2. One thread for writing output will come in addition
 nThreads=10
 
 %Spatial discretization step
-dx=0.033333333;
+dx=0.0025
 
 %Time step
-dt=0.001
+dt=0.00015
 
 %Refrence velocity (For computing Reynolds Number, Lattice Mach number and non-dimensionalization)
 uRef=1
 
 %Fluid viscosity
-viscosity=0.1
+viscosity=0.00125
 
 %Fluid density
 density=1000
 
 %ICs
-startVelX=0
+startVelX=1
 startVelY=0
 
 %BCs
@@ -32,29 +32,29 @@ startVelY=0
 		 %Velocity BC: vel,<X-velocity>,<Y-velocity>
 
 %West BC
-west=pres,100,0
+west=vel,1,0
 
 %North BC
-north=vel,0,0
+north=pres,0,1
 
 %East BC
 east=pres,0,0
 
 %South BC
-south=vel,0,0
+south=pres,0,1
 
 %Number of iterations
-nIter=1000
+nIter=50000
 
 %Number of iterations between each result write
-cyclesPerWrite=1000
+cyclesPerWrite=20
 
 %Number of iteration before result writing starts
-startWrite=1000
+startWrite=40000
 
 %Output directory (Default: ../res)
-outDir=../res/poiseuille
+outDir=../res/cylinder_re100
 
 %Results to be written (NB! Frequent writing of field variables will slow down the execution considerably)
 %Availiable options: X-velocity (ux), Y-velocity (uy), Pressure (p), Vorticity (vorticity), Lift and Drag (F)
-outputSelect=ux,uy
+outputSelect=ux,uy,vorticity
