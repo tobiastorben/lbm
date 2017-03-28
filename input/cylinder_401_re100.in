@@ -24,7 +24,7 @@ viscosity=0.00125
 density=1000
 
 %ICs
-startVelX=1
+startVelX=0
 startVelY=0
 
 %BCs
@@ -32,16 +32,16 @@ startVelY=0
 		 %Velocity BC: vel,<X-velocity>,<Y-velocity>
 
 %West BC
-west=vel,1,0
+west=pres,10,0
 
 %North BC
-north=pres,0,1
+north=vel,0,0
 
 %East BC
 east=pres,0,0
 
 %South BC
-south=pres,0,1
+south=vel,0,0
 
 %Number of iterations
 nIter=50000
@@ -57,4 +57,4 @@ outDir=../res/cylinder_re100
 
 %Results to be written (NB! Frequent writing of field variables will slow down the execution considerably)
 %Availiable options: X-velocity (ux), Y-velocity (uy), Pressure (p), Vorticity (vorticity), Lift and Drag (F)
-outputSelect=ux,uy,vorticity
+outputSelect=ux,uy,vorticity,F,p
