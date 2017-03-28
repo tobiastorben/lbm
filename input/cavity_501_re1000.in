@@ -50,7 +50,7 @@ nIter=300000
 cyclesPerWrite=50000
 
 %Number of iteration before result writing starts
-startWrite=1
+startWrite=50000
 
 %Output directory (Default: ../res)
 outDir=../res/cavity_501_re1000
