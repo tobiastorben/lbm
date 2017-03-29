@@ -44,13 +44,13 @@ east=pres,0,0
 south=vel,0,0
 
 %Number of iterations
-nIter=50000
+nIter=40000
 
 %Number of iterations between each result write
 cyclesPerWrite=20
 
 %Number of iteration before result writing starts
-startWrite=40000
+startWrite=38000
 
 %Output directory (Default: ../res)
 outDir=../res/cylinder_re1
