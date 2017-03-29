@@ -32,7 +32,7 @@ startVelY=0
 		 %Velocity BC: vel,<X-velocity>,<Y-velocity>
 
 %West BC
-west=pres,10,0
+west=pres,1000,0
 
 %North BC
 north=vel,0,0

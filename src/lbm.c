@@ -1,5 +1,30 @@
 #include "lbm.h"
-
+//------------------------------------------------------------------------------
+//LBM    Function: main   
+//------------------------------------------------------------------------------
+//PURPOSE:	Program entry point. Declares structs and variables, calls 
+//			initialization, steps through all iterations and writes output.
+//USAGE:	error = main(argc,argv)
+//ARGUMENTS:
+//			Name 	 Type     		Description
+//.............................................................................
+//			argc    int     		Command line argument count
+//			argv    char**  		Arrary of cmd line arguments
+//.............................................................................
+//RETURNS:
+//			Name 	 Type     		Description
+//.............................................................................
+//			error    int      		Error code. 0 indicates success
+//.............................................................................
+//CALLS:				
+//			initialize			Initializes simulation
+//			step				Progresses the simulation one time step
+//			writeResults		Writes results to file
+//			printProgression	Print progression to console
+//
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 int main(int argc, char* argv[]) {	
 	SimParams params;
 	FlowData flow;
@@ -46,6 +71,3 @@ int main(int argc, char* argv[]) {
 	printf("\n\nElapsed time: %.2f s\n\n", elapsed);
 	return 0;
 }
-
-
-

@@ -1,6 +1,29 @@
 #include "boundaries.h"
 
+//This file contains functions to apply the boundary conditions, as specified in the
+//input file. It also contain the function to collide the flow with the obstacle.
 
+//------------------------------------------------------------------------------
+//LBM    	Function: southXY
+//------------------------------------------------------------------------------
+//PURPOSE:	Applies Zou/He velocity boundary conditions to south boundary. Assigns
+//			the prescribed velocities, and calculates the density and the unknown
+//			distributions using the BCs and the known distributions from the
+//			streaming step.			
+//USAGE:	southXY(flow,lc,startX,endX,uxBC,uyBC)
+//ARGUMENTS:
+//			Name 	 	Type     			Description
+//.............................................................................
+//			flow	FlowData*		The field variables of the flow
+//			lc		LatticeConsts*	The constants of the D2Q9 lattice
+//			startX	int				Index of first block column
+//			endX	int				Index of last block column
+//			uxBC	double			The value of x velocity at boundary
+//			uyBC	double			The value of y velocity at boundary
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void southXY(FlowData* flow, LatticeConsts * lc,int startX, int endX, double uxBC, double uyBC) {
 	double *fIn,*rho;
 	int nx,ny,nxny;
@@ -22,6 +45,27 @@ void southXY(FlowData* flow, LatticeConsts * lc,int startX, int endX, double uxB
 	}
 }
 
+//------------------------------------------------------------------------------
+//LBM    	Function: southPX
+//------------------------------------------------------------------------------
+//PURPOSE:	Applies Zou/He velocity/pressure BCs to south boundary. Assigns the
+//			prescribed velocity/pressure, and calculates the unknown normal
+//			velocity, and the unknown distributions using the BCs, and the known
+//			distributions from the streaming step.			
+//USAGE:	southPX(flow,lc,startX,endX,rhoBC,uxBC)
+//ARGUMENTS:
+//			Name 	 	Type     			Description
+//.............................................................................
+//			flow	FlowData*		The field variables of the flow
+//			lc		LatticeConsts*	The constants of the D2Q9 lattice
+//			startX	int				Index of first block column
+//			endX	int				Index of last block column
+//			rhoBC	double			The value the density at the boundary
+//			uxBC	double			The value of x velocity at boundary
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void southPX(FlowData* flow, LatticeConsts * lc,int startX, int endX, double rhoBC, double uxBC) {
 	double *fIn,*uy;
 	int nx,ny,nxny;
@@ -44,7 +88,27 @@ void southPX(FlowData* flow, LatticeConsts * lc,int startX, int endX, double rho
 	}
 }
 
-
+//------------------------------------------------------------------------------
+//LBM    	Function: northXY
+//------------------------------------------------------------------------------
+//PURPOSE:	Applies Zou/He velocity boundary conditions to north boundary. Assigns
+//			the prescribed velocities, and calculates the density and the unknown
+//			distributions using the BCs and the known distributions from the
+//			streaming step.			
+//USAGE:	northXY(flow,lc,startX,endX,uxBC,uyBC)
+//ARGUMENTS:
+//			Name 	 	Type     			Description
+//.............................................................................
+//			flow	FlowData*		The field variables of the flow
+//			lc		LatticeConsts*	The constants of the D2Q9 lattice
+//			startX	int				Index of first block column
+//			endX	int				Index of last block column
+//			uxBC	double			The value of x velocity at boundary
+//			uyBC	double			The value of y velocity at boundary
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void northXY(FlowData* flow, LatticeConsts* lc,int startX, int endX, double uxBC, double uyBC) {
 	double *fIn,*rho;
 	int nx,ny,nxny;
@@ -66,6 +130,27 @@ void northXY(FlowData* flow, LatticeConsts* lc,int startX, int endX, double uxBC
 	}
 }
 
+//------------------------------------------------------------------------------
+//LBM    	Function: northPX
+//------------------------------------------------------------------------------
+//PURPOSE:	Applies Zou/He velocity/pressure BCs to north boundary. Assigns the
+//			prescribed velocity/pressure, and calculates the unknown normal
+//			velocity, and the unknown distributions using the BCs, and the known
+//			distributions from the streaming step.			
+//USAGE:	northPX(flow,lc,startX,endX,rhoBC,uxBC)
+//ARGUMENTS:
+//			Name 	 	Type     			Description
+//.............................................................................
+//			flow	FlowData*		The field variables of the flow
+//			lc		LatticeConsts*	The constants of the D2Q9 lattice
+//			startX	int				Index of first block column
+//			endX	int				Index of last block column
+//			rhoBC	double			The value the density at the boundary
+//			uxBC	double			The value of x velocity at boundary
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void northPX(FlowData* flow, LatticeConsts * lc,int startX, int endX, double rhoBC, double uxBC) {
 	double *fIn,*uy;
 	int nx,ny,nxny;
@@ -86,7 +171,26 @@ void northPX(FlowData* flow, LatticeConsts * lc,int startX, int endX, double rho
 		fIn[7*nxny + ny*i + ny -1] = fIn[5*nxny + ny*i + ny -1] + 0.5*(fIn[nxny + ny*i + ny -1]-fIn[3*nxny + ny*i + ny -1]) - 0.5*(rhoBC)*uxBC - (1.0/6.0)*(rhoBC)*uy[ny*i + ny-1];		
 	}
 }
-
+//------------------------------------------------------------------------------
+//LBM    	Function: westXY
+//------------------------------------------------------------------------------
+//PURPOSE:	Applies Zou/He velocity boundary conditions to west boundary. Assigns
+//			the prescribed velocities, and calculates the density and the unknown
+//			distributions using the BCs and the known distributions from the
+//			streaming step. The corner nodes are treaded by extrapolation of the
+//			neighbour in x-direction.	
+//USAGE:	westXY(flow,lc,uxBC,uyBC)
+//ARGUMENTS:
+//			Name 	 	Type     			Description
+//.............................................................................
+//			flow	FlowData*		The field variables of the flow
+//			lc		LatticeConsts*	The constants of the D2Q9 lattice
+//			uxBC	double			The value of x velocity at boundary
+//			uyBC	double			The value of y velocity at boundary
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void westXY(FlowData* flow, LatticeConsts* lc, double uxBC, double uyBC) {
 	double sum1, sum2, rhoJ,*fIn,*rho;
 	int nx,ny,k;
@@ -124,6 +228,26 @@ void westXY(FlowData* flow, LatticeConsts* lc, double uxBC, double uyBC) {
 	}	
 }
 
+//------------------------------------------------------------------------------
+//LBM    	Function: westPY
+//------------------------------------------------------------------------------
+//PURPOSE:	Applies Zou/He velocity/pressure BCs to west boundary. Assigns the
+//			prescribed velocity/pressure, and calculates the unknown normal
+//			velocity, and the unknown distributions using the BCs, and the known
+//			distributions from the streaming step. The corner nodes are treaded
+//			 by extrapolation of the neighbour in x-direction.	
+//USAGE:	westPY(flow,lc,rhoBC,uyBC)
+//ARGUMENTS:
+//			Name 	 	Type     			Description
+//.............................................................................
+//			flow	FlowData*		The field variables of the flow
+//			lc		LatticeConsts*	The constants of the D2Q9 lattice
+//			rhoBC	double			The value the density at the boundary
+//			uyBC	double			The value of x velocity at boundary
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void westPY(FlowData* flow, LatticeConsts* lc, double rhoBC, double uyBC) {
 	double sum1,sum2,*fIn,*ux,*rho;
 	int nx,ny,k;
@@ -162,6 +286,26 @@ void westPY(FlowData* flow, LatticeConsts* lc, double rhoBC, double uyBC) {
 	}	
 }
 
+//------------------------------------------------------------------------------
+//LBM    	Function: eastPY
+//------------------------------------------------------------------------------
+//PURPOSE:	Applies Zou/He velocity/pressure BCs to east boundary. Assigns the
+//			prescribed velocity/pressure, and calculates the unknown normal
+//			velocity, and the unknown distributions using the BCs, and the known
+//			distributions from the streaming step. The corner nodes are treaded
+//			 by extrapolation of the neighbour in x-direction.	
+//USAGE:	eastPY(flow,lc,rhoBC,uyBC)
+//ARGUMENTS:
+//			Name 	 	Type     			Description
+//.............................................................................
+//			flow	FlowData*		The field variables of the flow
+//			lc		LatticeConsts*	The constants of the D2Q9 lattice
+//			rhoBC	double			The value the density at the boundary
+//			uyBC	double			The value of x velocity at boundary
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void eastPY(FlowData* flow, LatticeConsts* lc, double rhoBC, double uyBC) {
 	double sum1,sum2,*fIn,*ux,*rho;
 	int nx,ny,k;
@@ -198,7 +342,26 @@ void eastPY(FlowData* flow, LatticeConsts* lc, double rhoBC, double uyBC) {
 	fIn[k*nx*ny + (nx-1)*ny + ny-1] = fIn[k*nx*ny + (nx-2)*ny + ny-1];
 	}
 }
-
+//------------------------------------------------------------------------------
+//LBM    	Function: eastXY
+//------------------------------------------------------------------------------
+//PURPOSE:	Applies Zou/He velocity boundary conditions to west boundary. Assigns
+//			the prescribed velocities, and calculates the density and the unknown
+//			distributions using the BCs and the known distributions from the
+//			streaming step. The corner nodes are treaded by extrapolation of the
+//			neighbour in x-direction.	
+//USAGE:	eastflow,lc,uxBC,uyBC)
+//ARGUMENTS:
+//			Name 	 	Type     			Description
+//.............................................................................
+//			flow	FlowData*		The field variables of the flow
+//			lc		LatticeConsts*	The constants of the D2Q9 lattice
+//			uxBC	double			The value of x velocity at boundary
+//			uyBC	double			The value of y velocity at boundary
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void eastXY(FlowData* flow, LatticeConsts* lc, double uxBC, double uyBC) {
 	double sum1,sum2,*fIn,*rho,rhoJ;
 	int nx,ny,k;
@@ -237,6 +400,26 @@ void eastXY(FlowData* flow, LatticeConsts* lc, double uxBC, double uyBC) {
 	}
 }
 
+//------------------------------------------------------------------------------
+//LBM    	Function: bounce
+//------------------------------------------------------------------------------
+//PURPOSE:	Apply the collision to the obstacle. This is done by on-wall bounce
+//			back. This reduces to assigning the outgoing distribution in one
+//			direction, to the incoming distribution in the opposite direction.
+//			This process is done for all '1' nodes in the obstacle mask. This
+//			function is not executed in parallell, but demands very little 
+//			CPU time.
+//USAGE:	bounce(flow,lc,params)
+//ARGUMENTS:
+//			Name 	 	Type     			Description
+//.............................................................................
+//			flow	FlowData*		The field variables of the flow
+//			lc		LatticeConsts*	The constants of the D2Q9 lattice
+//			params	SimParams*		The simulation parameters
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void bounce(FlowData* flow, LatticeConsts* lc, SimParams* params) {
 	int i,j,k,l,nx,ny,*opp;
 	

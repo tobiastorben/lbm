@@ -1,5 +1,24 @@
 #include "inputParser.h"
 
+//------------------------------------------------------------------------------
+//LBM    Function: parseInput
+//------------------------------------------------------------------------------
+//PURPOSE:	Parses the input file, and distrubutes the paramters to their
+//			respective structs.
+//USAGE:	error = parseInput(inPath,params,bcdata)
+//ARGUMENTS:
+//			Name 	 Type     		Description
+//.............................................................................
+//			inPath	char*  	   		Path to input file
+//			params  SimParams*		The parameters of the simulation
+//			bcdata	BoundaryData*	The boundary conditions
+//.............................................................................
+//RETURNS:
+//			error	int				0 if the minimum number of parameters has been
+//									set, 1 otherwise.
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 int parseInput(char* inPath, SimParams* params, BoundaryData* bcdata) {
 	FILE* fp;
 	char *line,*token;

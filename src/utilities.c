@@ -1,74 +1,24 @@
 #include "utilities.h"
 
-void printVecD(double* vec, int n) {
-	for (int i = 0; i < n; i++){
-		printf("%8f, ", vec[i]);
-	}
-	printf("\n");
-		
-}
-void printVecI(int* vec, int n) {
-	for (int i = 0; i < n; i++){
-		printf("%8d, ", vec[i]);
-	}
-	printf("\n");	
-}
-
-void printMatI(int* mat, int n, int m) {
-	for (int i = 0; i < n; i++){
-		for (int j = 0; j < m; j++){
-		printf("%8d ", mat[m*i + j]);
-		}
-	printf("\n");
-	}
-	printf("\n");
-}
-void printMatD(double* mat, int n, int m) {
-	for (int i = 0; i < n; i++){
-		for (int j = 0; j < m; j++){
-		printf("%f ", mat[m*i + j]);
-		}
-	printf("\n");
-	}
-printf("\n");	
-}
-
-void csvWriteD(double* mat, int n, int m, char* path) {
-	FILE* fp = fopen(path,"w");
-	for (int i = 0; i < n; i++){
-		for (int j = 0; j < m; j++){
-		fprintf(fp,"%.3e", mat[m*i + j]);
-		if (j != m-1) fprintf(fp,",");
-		}
-	if (i != (n-1)) fprintf(fp,"\n");
-	}
-	fclose(fp);
-}
-
-void csvWriteI(int* mat, int n, int m, char* path) {
-	FILE* fp = fopen(path,"w");
-	for (int i = 0; i < n; i++){
-		for (int j = 0; j < m; j++){
-		fprintf(fp,"%d", mat[m*i + j]);
-		if (j != m-1) fprintf(fp,",");
-		}
-	if (i != (n-1)) fprintf(fp,"\n");
-	}
-	fclose(fp);
-}
-
-void csvWriteLayer(double* mat, int n, int m, int k, char* path) {
-		FILE* fp = fopen(path,"w");
-	for (int i = 0; i < n; i++){
-		for (int j = 0; j < m; j++){
-		fprintf(fp,"%.3e", mat[k*n*m +m*i + j]);
-		if (j != m-1) fprintf(fp,",");
-		}
-	if (i != (n-1)) fprintf(fp,"\n");
-	}
-	fclose(fp);
-}
-
+//------------------------------------------------------------------------------
+//LBM    Function: writeU  
+//------------------------------------------------------------------------------
+//PURPOSE:	Writes velocity component to file in csv format
+//USAGE:	writeU(u,n,m,c,path)
+//ARGUMENTS:
+//			Name 	 Type     		Description
+//.............................................................................
+//			u		double*     	Matrix containing velocity compent at each
+//									node
+//			n     	int				Number of rows
+//			m		int 			Number of colums
+//			c		double			Scale factor between lattice units and
+//									physical units
+//			path	char*			Path to be written to
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void writeU(double* u, int n, int m, double c, char* path) {
 	FILE* fp;
 	fp = fopen(path,"w");
@@ -81,7 +31,21 @@ void writeU(double* u, int n, int m, double c, char* path) {
 	}
 	fclose(fp);
 }
-
+//------------------------------------------------------------------------------
+//LBM    Function: writeTimeSeries
+//------------------------------------------------------------------------------
+//PURPOSE:	Writes a vector of values to a row in a file
+//USAGE:	writeTimeSeries(v,n,path)
+//ARGUMENTS:
+//			Name 	 Type     		Description
+//.............................................................................
+//			v		double*     	Vector to be written
+//			n     	int				Number of rows
+//			path	char*			Path to be written to
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void writeTimeSeries(double* v, int n, char* path) {
 	FILE* fp = fopen(path,"a");
 	for (int i = 0; i < (n-1); i++){
@@ -91,6 +55,26 @@ void writeTimeSeries(double* v, int n, char* path) {
 	fclose(fp);
 }
 
+//------------------------------------------------------------------------------
+//LBM    Function: writePres
+//------------------------------------------------------------------------------
+//PURPOSE:	Writes pressure field to file in csv format
+//USAGE:	writePres(rho,n,m,c,rhoPhys,path)
+//ARGUMENTS:
+//			Name 	 Type     		Description
+//.............................................................................
+//			rho		double*     	Matrix containing the density at each
+//									node, in lattice units
+//			n     	int				Number of rows
+//			m		int 			Number of colums
+//			c		double			Scale factor between lattice units and
+//									physical units
+//			rhoPhys	double			Refrence density in physical units
+//			path	char*			Path to be written to
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void writePres(double* rho, int n, int m, double c, double rhoPhys, char* path) {
 	double cSq;
 	FILE* fp;
@@ -107,6 +91,27 @@ void writePres(double* rho, int n, int m, double c, double rhoPhys, char* path) 
 	fclose(fp);
 }
 
+//------------------------------------------------------------------------------
+//LBM    Function: writeVorticity
+//------------------------------------------------------------------------------
+//PURPOSE:	Calculates vorticity at domain interior by a central differance
+//			approximation, and write it to a file in csv format.
+//USAGE:	writeVorticity(ux,uy,n,m,dt,path)
+//ARGUMENTS:
+//			Name 	 Type     		Description
+//.............................................................................
+//			ux		double*     	Matrix containing x component of velocity
+//									at each node, in lattice units
+//			uy		double*     	Matrix containing y component of velocity
+//									at each node, in lattice units
+//			n     	int				Number of rows
+//			m		int 			Number of colums
+//			dt		double			Time step in physical units physical units
+//			path	char*			Path to be written to
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void writeVorticity(double* ux, double* uy, int n, int m, double dt, char* path) {
 	FILE* fp;
 	double vort,coeff;
@@ -125,6 +130,64 @@ void writeVorticity(double* ux, double* uy, int n, int m, double dt, char* path)
 	fclose(fp);
 }
 
+//------------------------------------------------------------------------------
+//LBM    Function: writeResults
+//------------------------------------------------------------------------------
+//PURPOSE:	Copy the values to be written to a new memory location, and launch a
+//			thread to write them, while the execution of the solver continues in
+//			parallell.
+//USAGE:	writeResults(flow,lc,iter,printThread,pdata)
+//ARGUMENTS:
+//			Name 	 	Type     		Description
+//.............................................................................
+//			flow		FlowData*		The field variables of the flow
+//			lc			LatticeConsts*	The constants of the D2Q9 lattice
+//			iter    	int				Current iteration
+//			printThread	pthread_t* 		Pointer to print thread
+//			pdata		PrintData*		All the data needed for the print thread
+//.............................................................................
+//CALLS:				
+//			launchWriteThread			Starts the thread that writes results
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
+void writeResults(FlowData* flow, LatticeConsts* lc, int iter, pthread_t* printThread, PrintData* pdata) {
+	int nx,ny;
+	if (iter != pdata->params->startWrite) pthread_join(*printThread,NULL);
+	pdata->iter = iter;
+	nx = lc->nx;
+	ny = lc->ny;
+	
+	memcpy(pdata->uxCpy,flow->ux,nx*ny*sizeof(double));
+	memcpy(pdata->uyCpy,flow->uy,nx*ny*sizeof(double));
+	memcpy(pdata->rhoCpy,flow->rho,nx*ny*sizeof(double));
+	pthread_create(printThread,NULL,launchWriteThread,pdata);
+	
+	return;
+}
+
+//------------------------------------------------------------------------------
+//LBM    Function: launchWriteThread
+//------------------------------------------------------------------------------
+//PURPOSE:	Entry point for print thread. Checks which output should be written,
+//			and calls the corresponding function to do the writing.
+//USAGE:	launchWriteThread(flow,lc,iter,printThread,pdata)
+//ARGUMENTS:
+//			Name 	 	Type     		Description
+//.............................................................................
+//			pdata		PrintData*		All the data needed for the print thread
+//.............................................................................
+//CALLS:				
+//			writeU						Writes velocity componen to file
+//			writePres					Writes pressure field to file
+//			writeVorticity				Write vorticity field to file
+//			calcF						Calculte the lift and drag force on the
+//										obstacle
+//			writeTimeSeries				Write vector to a line in a file
+
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void* launchWriteThread(void* pdata_void) {
 	
 	double *F,*ux,*uy,*rho,dx,dt,c,rhoPhys;
@@ -189,24 +252,23 @@ void* launchWriteThread(void* pdata_void) {
 	return NULL;
 }
 
+//------------------------------------------------------------------------------
+//LBM    Function: printProgression
+//------------------------------------------------------------------------------
+//PURPOSE:	Prints percentage progression to console
+//USAGE:	printProgression(iter,nIter)
+//ARGUMENTS:
+//			Name 	 	Type     	Description
+//.............................................................................
+//			iter     	int			Current iteration
+//			nIter		int 		Total number of iterations
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void printProgression(int iter, int nIter) {
 	double progression;
 	progression = 100*iter/nIter;
 	printf("%2.0f%%\b\b\b", progression);
 	fflush(stdout);
-}
-
-void writeResults(FlowData* flow, LatticeConsts* lc, int iter, pthread_t* printThread, PrintData* pdata) {
-	int nx,ny;
-	if (iter != pdata->params->startWrite) pthread_join(*printThread,NULL);
-	pdata->iter = iter;
-	nx = lc->nx;
-	ny = lc->ny;
-	
-	memcpy(pdata->uxCpy,flow->ux,nx*ny*sizeof(double));
-	memcpy(pdata->uyCpy,flow->uy,nx*ny*sizeof(double));
-	memcpy(pdata->rhoCpy,flow->rho,nx*ny*sizeof(double));
-	pthread_create(printThread,NULL,launchWriteThread,pdata);
-	
-	return;
 }

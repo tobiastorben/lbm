@@ -1,5 +1,31 @@
 #include "core.h"
 
+//------------------------------------------------------------------------------
+//LBM    	Function: step
+//------------------------------------------------------------------------------
+//PURPOSE:	Progress the simulation one time step. The domain is divided into
+//			vertical strips, called blocks. The calculations for each of these are
+//			executed in parallell. It also alls streamBlockBoundaries and bounce,
+//			which are not computed in paralell, but requires very little CPU time.
+//USAGE:	step(flow,lc,params,tdata)
+//ARGUMENTS:
+//			Name 	 Type     		Description
+//.............................................................................
+//			flow	FlowData*		The field variables of the flow
+//			lc		LatticeConsts*	The constants of the D2Q9 lattice
+//			params	SimParams* 		The parameters of the simulation		
+//			tdata	ThreadData*		Array of structs. Each struct contains one
+//									pthread and the data it needs to execute.
+//.............................................................................
+//CALLS:	streamBlockBoundaries	Stream two columns between blocks
+//			bounce					Bounce-back collision with obstacle
+//			updateFirstBlock		Does the calculations for the west block
+//			updateLastBlock			Does the calculations for the east block
+//			updateBlock				Does the calculations for remaining blocks
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
+
 void step(FlowData* flow, LatticeConsts* lc, SimParams* params, ThreadData* tdata) {
 	int nThreads = params->nThreads;
 	
@@ -16,9 +42,29 @@ void step(FlowData* flow, LatticeConsts* lc, SimParams* params, ThreadData* tdat
 		pthread_join(tdata[i].thread,NULL);
 	}
 
-	bounce(flow,lc,params);//Bounce-back collision with boundary
+	bounce(flow,lc,params);//Bounce-back collision with obstacle
 }
 
+//------------------------------------------------------------------------------
+//LBM    	Function: updateBlock
+//------------------------------------------------------------------------------
+//PURPOSE:	Calls the necessary functions to to all the calculations for one block
+//USAGE:	updateBlock(tdata_void)
+//ARGUMENTS:
+//			Name 	 	Type     			Description
+//.............................................................................
+//			tdata_void	void*		Void pointer to tdata for current block
+//.............................................................................
+//CALLS:	streamBlockInterior		Propagate distribution function to adjecent
+//									nodes
+//			southFun				Applies BCs on south boundary
+//			northFun				Applies BCs on north boundary
+//			updateRho				Calculates density from new distribution
+//			updateU					Calculates velocity from new distribution
+//			collide					Perform the collision step, by the BGK method
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void* updateBlock(void* tdata_void) {
 	ThreadData* tdata = (ThreadData*) tdata_void;
 	BoundaryData* bcdata = tdata->bcdata;
@@ -31,6 +77,27 @@ void* updateBlock(void* tdata_void) {
 	return NULL;
 }
 
+//------------------------------------------------------------------------------
+//LBM    	Function: updateFirstBlock
+//------------------------------------------------------------------------------
+//PURPOSE:	Calls the necessary functions to to all the calculations for west block
+//USAGE:	updateFirstBlock(tdata_void)
+//ARGUMENTS:
+//			Name 	 	Type     			Description
+//.............................................................................
+//			tdata_void	void*			Void pointer to tdata for current block
+//.............................................................................
+//CALLS:	streamFirstBlockInterior	Propagate distribution function to adjecent
+//										nodes for west block.
+//			southFun					Applies BCs on south boundary
+//			northFun					Applies BCs on north boundary
+//			westFun						Applies BCs on west boundary
+//			updateRho					Calculates density from new distribution
+//			updateU						Calculates velocity from new distribution
+//			collide						Perform the collision step, by the BGK method
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void* updateFirstBlock(void* tdata_void) {
 	ThreadData* tdata = (ThreadData*) tdata_void;
 	BoundaryData* bcdata = tdata->bcdata;
@@ -44,6 +111,27 @@ void* updateFirstBlock(void* tdata_void) {
 	return NULL;
 }
 
+//------------------------------------------------------------------------------
+//LBM    	Function: updateLastBlock
+//------------------------------------------------------------------------------
+//PURPOSE:	Calls the necessary functions to to all the calculations for east block
+//USAGE:	updateLastBlock(tdata_void)
+//ARGUMENTS:
+//			Name 	 	Type     			Description
+//.............................................................................
+//			tdata_void	void*			Void pointer to tdata for current block
+//.............................................................................
+//CALLS:	streamLastBlockInterior		Propagate distribution function to adjecent
+//										nodes for west block.
+//			southFun					Applies BCs on south boundary
+//			northFun					Applies BCs on north boundary
+//			eastFun						Applies BCs on east boundary
+//			updateRho					Calculates density from new distribution
+//			updateU						Calculates velocity from new distribution
+//			collide						Perform the collision step, by the BGK method
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void* updateLastBlock(void* tdata_void) {
 	ThreadData* tdata = (ThreadData*) tdata_void;
 	BoundaryData* bcdata = tdata->bcdata;
@@ -57,6 +145,23 @@ void* updateLastBlock(void* tdata_void) {
 	return NULL;
 }
 
+//------------------------------------------------------------------------------
+//LBM    	Function: updateRho
+//------------------------------------------------------------------------------
+//PURPOSE:	Calculates the density at each node, by summing the 9 distribution
+//			functions.
+//USAGE:	updateRho(flow,lc,startX,endX)
+//ARGUMENTS:
+//			Name 	 	Type     			Description
+//.............................................................................
+//			flow	FlowData*		The field variables of the flow
+//			lc		LatticeConsts*	The constants of the D2Q9 lattice
+//			startX	int				Index of first block column
+//			endX	int				Index of last block column
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void updateRho(FlowData* flow, LatticeConsts* lc, int startX, int endX) {
 	double sum;
 	int nx,ny;
@@ -74,6 +179,25 @@ void updateRho(FlowData* flow, LatticeConsts* lc, int startX, int endX) {
 	}
 }
 
+//------------------------------------------------------------------------------
+//LBM    	Function: updateU
+//------------------------------------------------------------------------------
+//PURPOSE:	Calculates the x and y velocity at each node, as a weighted sum of
+//			the 9 distribution functions, with the lattice vector in the the
+//			respective directions as weights. This sum is then divided by the
+//			density
+//USAGE:	updateU(flow,lc,startX,endX)
+//ARGUMENTS:
+//			Name 	 	Type     			Description
+//.............................................................................
+//			flow	FlowData*		The field variables of the flow
+//			lc		LatticeConsts*	The constants of the D2Q9 lattice
+//			startX	int				Index of first block column
+//			endX	int				Index of last block column
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void updateU(FlowData* flow, LatticeConsts* lc, int startX, int endX){
 	double sumX,sumY,*fIn,*ex,*ey,*rho,*ux,*uy;
 	int nx,ny,nxny,i,j,k;
@@ -102,8 +226,28 @@ void updateU(FlowData* flow, LatticeConsts* lc, int startX, int endX){
 	}	
 }
 
-
-
+//------------------------------------------------------------------------------
+//LBM    	Function: collide
+//------------------------------------------------------------------------------
+//PURPOSE:	Performs the collision step. The collision model used is the BGK model.
+//			It relaxes the current distrubution function, towards the local
+//			equilibrium distribution given by the Maxwell distribution.
+//			This operation can be viewed as a Successive Overrelaxation (SOR),
+//			where omega is equal to 1/tau. This therefore poses an absolute
+//			limit for the relaxtion time, tau, to be larger than 0.5.
+//USAGE:	collide(flow,lc,startX,endX)
+//ARGUMENTS:
+//			Name 	 	Type     			Description
+//.............................................................................
+//			flow	FlowData*		The field variables of the flow
+//			lc		LatticeConsts*	The constants of the D2Q9 lattice
+//			params	SimParams* 		The parameters of the simulation		
+//			startX	int				Index of first block column
+//			endX	int				Index of last block column
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void collide(FlowData* flow, LatticeConsts* lc, SimParams* params, int startX, int endX){
 	double u,fEq,uSq,rhoIJ,uxIJ,uyIJ,*ux,*uy,*ey,*ex,*fOut,*fIn,*rho,*w,tau;
 	int i,j,k,nx,ny, nxny;
@@ -137,6 +281,25 @@ void collide(FlowData* flow, LatticeConsts* lc, SimParams* params, int startX, i
 	}			 
 }
 
+//------------------------------------------------------------------------------
+//LBM    	Function: streamBlockInterior
+//------------------------------------------------------------------------------
+//PURPOSE:	Propagates the outgoing distributions to adjecent nodes. This reduces
+//			to shifting fOut[i] in the direction of (ex[i],ey[i]). Only the
+//			interior of the block is streamed here, as the boundaries requiers
+//			special treatment since they have to access data outside the block.
+//USAGE:	streamBlockInterior(flow,lc,startX,endX)
+//ARGUMENTS:
+//			Name 	 	Type     			Description
+//.............................................................................
+//			flow	FlowData*		The field variables of the flow
+//			lc		LatticeConsts*	The constants of the D2Q9 lattice
+//			startX	int				Index of first block column
+//			endX	int				Index of last block column
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void streamBlockInterior(FlowData* flow,LatticeConsts* lc,int startX, int endX) {
 	int i,j,k,l,nx,ny,nxny,*ex,*ey,*northShiftArray,*southShiftArray;
 	double *fIn,*fOut;
@@ -167,7 +330,24 @@ void streamBlockInterior(FlowData* flow,LatticeConsts* lc,int startX, int endX) 
 		}
 	}		
 }
-
+//------------------------------------------------------------------------------
+//LBM    	Function: streamFirstBlockInterior
+//------------------------------------------------------------------------------
+//PURPOSE:	Streams the west block. This is equivalent to streamBlockInterior,
+//			exept for the west nodes. Here, only the distribution from the east
+//			neighbours are streamed. The incoming distributions for the
+//			others are treaded by the boundary conditions.
+//USAGE:	streamFirstBlockInterior(flow,lc,endX)
+//ARGUMENTS:
+//			Name 	 	Type     			Description
+//.............................................................................
+//			flow	FlowData*		The field variables of the flow
+//			lc		LatticeConsts*	The constants of the D2Q9 lattice
+//			endX	int				Index of last block column
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void streamFirstBlockInterior(FlowData* flow,LatticeConsts* lc,int endX) {
 	int i,j,k,l,nx,ny,nxny,*ex,*ey,*northShiftArray,*southShiftArray,*westShiftArray;
 	double *fIn,*fOut;
@@ -208,6 +388,24 @@ void streamFirstBlockInterior(FlowData* flow,LatticeConsts* lc,int endX) {
 	}
 }
 
+//------------------------------------------------------------------------------
+//LBM    	Function: streamLastBlockInterior
+//------------------------------------------------------------------------------
+//PURPOSE:	Streams the east block. This is equivalent to streamBlockInterior,
+//			exept for the east nodes. Here, only the distribution from the west
+//			neighbours are streamed. The incoming distributions for the
+//			others are treaded by the boundary conditions.
+//USAGE:	streamFirstBlockInterior(flow,lc,endX)
+//ARGUMENTS:
+//			Name 	 	Type     			Description
+//.............................................................................
+//			flow	FlowData*		The field variables of the flow
+//			lc		LatticeConsts*	The constants of the D2Q9 lattice
+//			startX	int				Index of first block column
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void streamLastBlockInterior(FlowData* flow,LatticeConsts* lc, int startX) {
 	int i,j,k,l,nx,ny,nxny,*ex,*ey,*northShiftArray,*southShiftArray,*eastShiftArray;
 	double *fIn,*fOut;
@@ -248,6 +446,22 @@ void streamLastBlockInterior(FlowData* flow,LatticeConsts* lc, int startX) {
 	}
 }
 
+//------------------------------------------------------------------------------
+//LBM    	Function: streamBlockBoundaries
+//------------------------------------------------------------------------------
+//PURPOSE:	All the threads are synchronized, and then a 2 node wide column
+//			between every block is streamed. This is to prevent race conditions
+//USAGE:	streamBlockBoundaries(flow,lc,params)
+//ARGUMENTS:
+//			Name 	 	Type     			Description
+//.............................................................................
+//			flow	FlowData*		The field variables of the flow
+//			lc		LatticeConsts*	The constants of the D2Q9 lattice
+//			params	SimParams*		The parameters of the simulation		
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void streamBlockBoundaries(FlowData* flow,LatticeConsts* lc,SimParams* params){
 	int i,j,k,l,nx,ny,nxny,*ex,*ey,blockSize,nThreads,*northShiftArray,*southShiftArray;
 	double *fIn,*fOut;

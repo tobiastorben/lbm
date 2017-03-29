@@ -1,20 +1,114 @@
 #include "initialization.h"
 
-void mapObstacleCells(LatticeConsts* lc, SimParams* params) {
-	int i,j,k;
-	int* bbCells = (int*) malloc(2*(params->nBBcells)*sizeof(int));
-	k = 0;
-	for (i = 0; i < lc->nx; i++){
-		for (j = 0; j < lc->ny; j++){    
-			if (params->bbCellMat[i*(lc->ny) + j]) {
-				bbCells[k] = i;
-				bbCells[params->nBBcells+k] = j;
-				k++;
-			}
-	    }
+//This file contains all function to initialize the simulation, before it
+//enters the main loop.
+
+//------------------------------------------------------------------------------
+//LBM    Function: initialize 
+//------------------------------------------------------------------------------
+//PURPOSE:	Initializes everything before it enters the main loop. This work
+//			distributed to subfunctions, see call list.
+//USAGE:	initialize(flow,params,lc,tdata,pdata,bcdata,inPath)
+//ARGUMENTS:
+//			Name 	 Type     		Description
+//.............................................................................
+//			lc		LatticeConsts*	The constants of the D2Q9 lattice
+//			params	SimParams* 		The parameters of the simulation
+//			flow	FlowData*		The field variables of the flow
+//			bcdata	BoundaryData*	The boundary conditions of the flow
+//			pdata	PrintData*		All the data needed for the print thread
+//			tdata	TreadData**		Pointer to array of structs. Each struct contains
+//									one pthread and the data it needs to execute.
+//			inPath	char*			The path to the input file		
+//.............................................................................
+//CALLS:	
+//			setLatticeConstants		Set constants of D2Q9 lattice
+//			parseInput				Parse input file
+//			readObstacle			Read obstacle mask into matrix, and use it to
+//									determine grid size
+//			mapObstacleCells		map obstacle cells to their index in the grid
+//			nonDimensionalize		Convert to lattice units, and set relaxation time
+//			initRho					Allocate and initialize density matrix
+//			initUx					Allocate and initialize ux matrix
+//			initUy					Allocate and initialize uy matrix
+//			initFOut				Allocate and initialize FOut 3D matrix
+
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
+void initialize(FlowData* flow, SimParams* params, LatticeConsts* lc, ThreadData** tdata, PrintData* pdata, BoundaryData* bcdata, char* inPath) {
+	int nx,ny,i,nThreads,rest;
+	pthread_t *threads;
+	
+	printf("Initializing...\n\n");
+	
+	//D2Q9 lattice constants
+	setLatticeConstants(lc);
+	
+	if (parseInput(inPath,params,bcdata)) {
+		printf("Invalid simulation parameters. Exiting.");
+		exit(1);
 	}
-	params->bbCells = bbCells;
+
+	//Read geometry and set dimensions
+	readObstacle(lc,params);//Read obstacle data from file
+	mapObstacleCells(lc,params);//Array of indices to bounce back nodes
+	
+	//Cast to non-dimensional form
+	nonDimensionalize(lc, params,bcdata);
+			
+	//ICs: Initialze flow as Poiseuille flow
+	nx = lc->nx;
+	ny = lc->ny;
+	initRho(lc,flow);
+	initUx(lc,flow,params);
+	initUy(lc,flow,params);
+	flow->fIn = (double*) malloc(nx*ny*9* sizeof(double));
+	initFOut(lc,flow);
+	
+	//Initialize thread data
+	nThreads = params->nThreads;
+	threads = (pthread_t*) malloc(nThreads*sizeof(pthread_t));	
+	rest = nx % nThreads;
+	*tdata = (ThreadData*) malloc(nThreads*sizeof(ThreadData));
+	for (i = 0; i < nThreads; i++){
+		(*tdata)[i].thread = threads[i];
+		(*tdata)[i].params = params;
+		(*tdata)[i].lc = lc;
+		(*tdata)[i].flow = flow;
+		(*tdata)[i].bcdata = bcdata;
+		(*tdata)[i].startX = i*(nx-rest)/nThreads;
+		(*tdata)[i].endX = (i+1)*((nx-rest)/nThreads)-1;
+	}
+	(*tdata)[nThreads-1].endX = nx-1;
+	params->blockSize = (*tdata)[0].endX+1;
+
+	//Initialize print data
+	pdata->uxCpy = (double*) malloc(nx*ny*sizeof(double));
+	pdata->uyCpy = (double*) malloc(nx*ny*sizeof(double));
+	pdata->rhoCpy = (double*) malloc(nx*ny*sizeof(double));
+	pdata->nx = nx;
+	pdata->ny = ny;
+	pdata->params = params;
+	
 }
+
+//------------------------------------------------------------------------------
+//LBM    Function: readObstacle 
+//------------------------------------------------------------------------------
+//PURPOSE:	Reads the obstacle file, and stores it in a boolean mask (bbCellMat).
+//			 It also sets the mesh size (nx,ny) based on the number off rows and
+//			columns of the obstacle.
+//USAGE:	readObstacle(lc,params)
+//ARGUMENTS:
+//			Name 	 Type     		Description
+//.............................................................................
+//			lc		LatticeConsts*	The constants of the D2Q9 lattice
+//			params	SimParams* 		The parameters of the simulation		
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void readObstacle(LatticeConsts* lc, SimParams* params) {
 	FILE* fp = fopen(params->obstaclePath,"r");
 	char* line = malloc(10000);		
@@ -60,6 +154,55 @@ void readObstacle(LatticeConsts* lc, SimParams* params) {
 
 }
 
+//------------------------------------------------------------------------------
+//LBM    Function: mapObstacleCells
+//------------------------------------------------------------------------------
+//PURPOSE: 	Traverses the boolean mask bbCellMat, and creates a 2-row matrix,
+//			bbCells, where each column contains the x and y index of a bounce back
+//			cell. This allows for fast execution of the bounce method in the core
+//			solver.
+//USAGE:	mapObstacleCells(lc,params)
+//ARGUMENTS:
+//			Name 	 Type     		Description
+//.............................................................................
+//			lc		LatticeConsts*	The constants of the D2Q9 lattice
+//			params	SimParams* 		The parameters of the simulation		
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
+void mapObstacleCells(LatticeConsts* lc, SimParams* params) {
+	int i,j,k;
+	int* bbCells = (int*) malloc(2*(params->nBBcells)*sizeof(int));
+	k = 0;
+	for (i = 0; i < lc->nx; i++){
+		for (j = 0; j < lc->ny; j++){    
+			if (params->bbCellMat[i*(lc->ny) + j]) {
+				bbCells[k] = i;
+				bbCells[params->nBBcells+k] = j;
+				k++;
+			}
+	    }
+	}
+	params->bbCells = bbCells;
+}
+
+//------------------------------------------------------------------------------
+//LBM    Function: initUx 
+//------------------------------------------------------------------------------
+//PURPOSE:	Allocate memory for the ux matrix, and initialize it to the value
+//			specified in the input file.
+//USAGE:	initUx(lc,flow,params)
+//ARGUMENTS:
+//			Name 	 Type     		Description
+//.............................................................................
+//			lc		LatticeConsts*	The constants of the D2Q9 lattice
+//			flow	FlowData*		The field variables of the flow
+//			params	SimParams* 		The parameters of the simulation		
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void initUx(LatticeConsts* lc, FlowData* flow, SimParams* params) {
 	int i,j,nx,ny;
 	double *ux;
@@ -83,7 +226,22 @@ void initUx(LatticeConsts* lc, FlowData* flow, SimParams* params) {
 	
 	flow->ux = ux;	
 }
-
+//------------------------------------------------------------------------------
+//LBM    Function: initUy 
+//------------------------------------------------------------------------------
+//PURPOSE:	Allocate memory for the uy matrix, and initialize it to the value
+//			specified in the input file.
+//USAGE:	initUy(lc,flow,params)
+//ARGUMENTS:
+//			Name 	 Type     		Description
+//.............................................................................
+//			lc		LatticeConsts*	The constants of the D2Q9 lattice
+//			flow	FlowData*		The field variables of the flow
+//			params	SimParams* 		The parameters of the simulation		
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void initUy(LatticeConsts* lc, FlowData* flow, SimParams* params) {
 	int i,j,nx,ny;
 	double *uy;
@@ -108,7 +266,21 @@ void initUy(LatticeConsts* lc, FlowData* flow, SimParams* params) {
 	flow->uy = uy;	
 }
 
-
+//------------------------------------------------------------------------------
+//LBM    Function: initFOut
+//------------------------------------------------------------------------------
+//PURPOSE:	Allocate memory for the fOut 3D matrix, and initialize it to the
+//			equilibrium distribution for the initial velocity field.
+//USAGE:	initFOut(lc,flow)
+//ARGUMENTS:
+//			Name 	 Type     		Description
+//.............................................................................
+//			lc		LatticeConsts*	The constants of the D2Q9 lattice
+//			flow	FlowData*		The field variables of the flow
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void initFOut(LatticeConsts* lc, FlowData* flow) {
 	int i,j,k,nx,ny;
 	double u, *fOut,*ux,*uy;
@@ -131,7 +303,20 @@ void initFOut(LatticeConsts* lc, FlowData* flow) {
 	}
 	flow->fOut = fOut;
 }
-
+//------------------------------------------------------------------------------
+//LBM    Function: initRho
+//------------------------------------------------------------------------------
+//PURPOSE:	Allocate memory for the rho matrix, and initialize to unity.
+//USAGE:	initUx(lc,flow)
+//ARGUMENTS:
+//			Name 	 Type     		Description
+//.............................................................................
+//			lc		LatticeConsts*	The constants of the D2Q9 lattice
+//			flow	FlowData*		The field variables of the flow
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void initRho(LatticeConsts* lc, FlowData* flow) {
 	int i,j,nx,ny;
 	double* rho;
@@ -148,6 +333,27 @@ void initRho(LatticeConsts* lc, FlowData* flow) {
 	flow->rho = rho;
 }
 
+//------------------------------------------------------------------------------
+//LBM    Function: nonDimensionalize
+//------------------------------------------------------------------------------
+//PURPOSE:	Convert the physical units of the input file, to lattice units. All
+//			velocities and BC's and IC's are scaled to lattice units. The
+//			relaxation time, tau, is calculated based on the Reynolds number,
+//			the time step and the spatial step. It also prints central parameters
+//			of the simulation, which are useful for choosing time step and grid size
+//			for achieving good accuracy and stability.
+//
+//USAGE:	nonDimensionalize(lc,params,bcdata)
+//ARGUMENTS:
+//			Name 	 Type     		Description
+//.............................................................................
+//			lc		LatticeConsts*	The constants of the D2Q9 lattice
+//			params	SimParams* 		The parameters of the simulation
+//			bcdata	BoundaryData*	The boundary conditions of the flow	
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void nonDimensionalize(LatticeConsts* lc, SimParams* params, BoundaryData* bcdata) {
 	double width,Re,t0,dx,dt,nu,u0,scale,rhoPhys;
 	
@@ -213,63 +419,20 @@ void nonDimensionalize(LatticeConsts* lc, SimParams* params, BoundaryData* bcdat
 	return;
 }
 
-void initialize(FlowData* flow, SimParams* params, LatticeConsts* lc, ThreadData** tdata, PrintData* pdata, BoundaryData* bcdata, char* inPath) {
-	int nx,ny,i,nThreads,rest;
-	pthread_t *threads;
-	
-	printf("Initializing...\n\n");
-	
-	//D2Q9 lattice constants
-	setLatticeConstants(lc);
-	
-	if (parseInput(inPath,params,bcdata)) {
-		printf("Invalid simulation parameters. Exiting.");
-		exit(1);
-	}
-
-	//Read geometry and set dimensions
-	readObstacle(lc,params);//Read obstacle data from file
-	mapObstacleCells(lc,params);//Array of indices to bounce back nodes
-	
-	//Cast to non-dimensional form
-	nonDimensionalize(lc, params,bcdata);
-			
-	//ICs: Initialze flow as Poiseuille flow
-	nx = lc->nx;
-	ny = lc->ny;
-	initRho(lc,flow);
-	initUx(lc,flow,params);
-	initUy(lc,flow,params);
-	flow->fIn = (double*) malloc(nx*ny*9* sizeof(double));
-	initFOut(lc,flow);
-	
-	//Initialize thread data
-	nThreads = params->nThreads;
-	threads = (pthread_t*) malloc(nThreads*sizeof(pthread_t));	
-	rest = nx % nThreads;
-	*tdata = (ThreadData*) malloc(nThreads*sizeof(ThreadData));
-	for (i = 0; i < nThreads; i++){
-		(*tdata)[i].thread = threads[i];
-		(*tdata)[i].params = params;
-		(*tdata)[i].lc = lc;
-		(*tdata)[i].flow = flow;
-		(*tdata)[i].bcdata = bcdata;
-		(*tdata)[i].startX = i*(nx-rest)/nThreads;
-		(*tdata)[i].endX = (i+1)*((nx-rest)/nThreads)-1;
-	}
-	(*tdata)[nThreads-1].endX = nx-1;
-	params->blockSize = (*tdata)[0].endX+1;
-
-	//Initialize print data
-	pdata->uxCpy = (double*) malloc(nx*ny*sizeof(double));
-	pdata->uyCpy = (double*) malloc(nx*ny*sizeof(double));
-	pdata->rhoCpy = (double*) malloc(nx*ny*sizeof(double));
-	pdata->nx = nx;
-	pdata->ny = ny;
-	pdata->params = params;
-	
-}
-
+//------------------------------------------------------------------------------
+//LBM    Function: setLatticeConstants
+//------------------------------------------------------------------------------
+//PURPOSE:	Sets all the lattice constants for the D2Q9 BGK model
+//
+//USAGE:	setLatticeConstants(lc)
+//ARGUMENTS:
+//			Name 	 Type     		Description
+//.............................................................................
+//			lc		LatticeConsts*	The constants of the D2Q9 lattice
+//.............................................................................
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 void setLatticeConstants(LatticeConsts* lc) {
 	double w[] = {4.0/9, 1.0/9, 1.0/9, 1.0/9, 1.0/9, 1.0/36, 1.0/36, 1.0/36, 1.0/36};//Weights
 	double ex[] = {0,1.0,0,-1.0,0,1.0,-1.0,-1.0,1.0};//x component of lattice vectors 
@@ -277,10 +440,13 @@ void setLatticeConstants(LatticeConsts* lc) {
 	int exI[] = {0,1,0,-1,0,1,-1,-1,1};//int version for indexing
 	int eyI[] = {0,0,1,0,-1,1,1,-1,-1};//int version for indexing
 	int opposite[] = {0,3,4,1,2,7,8,5,6};//Index of opposite vector in lattice
+	
+	//Index of the lattice velocities that are pointing inwards at each boyndary
 	int westShiftArray[] = {0,2,3,4,6,7};
 	int northShiftArray[] = {0,1,2,3,5,6};
 	int eastShiftArray[] = {0,1,2,4,5,8};
 	int southShiftArray[] = {0,1,3,4,7,8};
+	
 	memcpy(lc->w,w,sizeof(lc->w));
 	memcpy(lc->ex,ex,sizeof(lc->ex));
 	memcpy(lc->ey,ey,sizeof(lc->ey));

@@ -1,5 +1,29 @@
 #include "postProcessing.h"
 
+//------------------------------------------------------------------------------
+//LBM    Function: calcF
+//------------------------------------------------------------------------------
+//PURPOSE:	Calculate the total force of the obstacle. This is done by traversing
+//			the boolean mask of the obstacle, and integrating the pressure of all
+//			cells that are exposed to the fluid. The skin friction is calculated
+//			by using a forward difference approximation of the the derivative of
+//			the tangetial velocity, in normal directio. This value is mulitplied
+//			with the dynamic viscosity, to obtain the shear stress, from Newtons
+//			law of wet friction. This stress is integrated over the surface.
+//USAGE:	F = calcF(ny,params,rho,ux,uy)
+//ARGUMENTS:
+//			Name 	 Type     		Description
+//.............................................................................
+//			ny		int  	   		Number of nodes in y direction
+//			rho     double*			Density matrix
+//			ux		double*			x-velocity field
+//			uy		double*			y-velocity field
+//.............................................................................
+//RETURNS:
+//			F		double*			2-vector containing forces [Fx, Fy]
+//Author: Tobias Valentin Rye Torben
+//Date/Version: 29.03.2017
+//******************************************************************************
 double* calcF(int ny, SimParams* params, double* rho, double* ux, double* uy) {
 	double p,*F,c,dx,dt,rhoPhys,visc,fric;
 	int i,j,k,*bbCells,*bbCellMat,nBBcells;
