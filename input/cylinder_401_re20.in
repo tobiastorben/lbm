@@ -24,7 +24,7 @@ viscosity=0.00625
 density=1000
 
 %ICs
-startVelX=0
+startVelX=1
 startVelY=0
 
 %BCs
@@ -32,16 +32,16 @@ startVelY=0
 		 %Velocity BC: vel,<X-velocity>,<Y-velocity>
 
 %West BC
-west=pres,200,0
+west=vel,1,0
 
 %North BC
-north=vel,0,0
+north=vel,1,0
 
 %East BC
 east=pres,0,0
 
 %South BC
-south=vel,0,0
+south=vel,1,0
 
 %Number of iterations
 nIter=40000
