@@ -95,7 +95,7 @@ void writePres(double* rho, int n, int m, double c, double rhoPhys, char* path) 
 //LBM    Function: writeVorticity
 //------------------------------------------------------------------------------
 //PURPOSE:	Calculates vorticity at domain interior by a central differance
-//			approximation, and write it to a file in csv format.
+//			approximation, and writes it to a file in csv format.
 //USAGE:	writeVorticity(ux,uy,n,m,dt,path)
 //ARGUMENTS:
 //			Name 	 Type     		Description

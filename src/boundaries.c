@@ -427,7 +427,6 @@ void bounce(FlowData* flow, LatticeConsts* lc, SimParams* params) {
 	ny = lc->ny;
 	opp = lc->opposite;
 	
-	//Obstacle
 	for (l = 0; l < params->nBBcells; l++) {
 		for (k = 0; k < 9; k++){
 				i = params->bbCells[l];

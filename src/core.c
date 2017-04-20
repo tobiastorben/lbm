@@ -48,7 +48,7 @@ void step(FlowData* flow, LatticeConsts* lc, SimParams* params, ThreadData* tdat
 //------------------------------------------------------------------------------
 //LBM    	Function: updateBlock
 //------------------------------------------------------------------------------
-//PURPOSE:	Calls the necessary functions to to all the calculations for one block
+//PURPOSE:	Calls the necessary functions to do all the calculations for one block
 //USAGE:	updateBlock(tdata_void)
 //ARGUMENTS:
 //			Name 	 	Type     			Description
@@ -275,7 +275,7 @@ void collide(FlowData* flow, LatticeConsts* lc, SimParams* params, int startX, i
 			for (k = 0; k < 9; k++){
 				u = 3.0*(ex[k]*uxIJ + ey[k]*uyIJ);
 				fEq = rhoIJ*(w[k])*(1.0+u+0.5*u*u-uSq);
-				fOut[nxny*k + ny*i + j] = fIn[nxny*k + ny*i + j]-(fIn[nxny*k + ny*i + j]-fEq)/tau;//Change to *omega for speed? 
+				fOut[nxny*k + ny*i + j] = fIn[nxny*k + ny*i + j]-(fIn[nxny*k + ny*i + j]-fEq)/tau;
 			}
 		}
 	}			 
@@ -463,7 +463,7 @@ void streamLastBlockInterior(FlowData* flow,LatticeConsts* lc, int startX) {
 //Date/Version: 29.03.2017
 //******************************************************************************
 void streamBlockBoundaries(FlowData* flow,LatticeConsts* lc,SimParams* params){
-	int i,j,k,l,nx,ny,nxny,*ex,*ey,blockSize,nThreads,*northShiftArray,*southShiftArray;
+	int i,j,k,l,nx,ny,nxny,*ex,*ey,blockSize,*northShiftArray,*southShiftArray;
 	double *fIn,*fOut;
 	
 	nx = lc->nx;

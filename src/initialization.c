@@ -29,8 +29,7 @@
 //			mapObstacleCells		map obstacle cells to their index in the grid
 //			nonDimensionalize		Convert to lattice units, and set relaxation time
 //			initRho					Allocate and initialize density matrix
-//			initUx					Allocate and initialize ux matrix
-//			initUy					Allocate and initialize uy matrix
+//			initU					Allocate and initialize velocity field
 //			initFOut				Allocate and initialize FOut 3D matrix
 
 //Author: Tobias Valentin Rye Torben
@@ -61,8 +60,7 @@ void initialize(FlowData* flow, SimParams* params, LatticeConsts* lc, ThreadData
 	nx = lc->nx;
 	ny = lc->ny;
 	initRho(lc,flow);
-	initUx(lc,flow,params);
-	initUy(lc,flow,params);
+	initU(lc,flow,params);
 	flow->fIn = (double*) malloc(nx*ny*9* sizeof(double));
 	initFOut(lc,flow);
 	
@@ -188,11 +186,11 @@ void mapObstacleCells(LatticeConsts* lc, SimParams* params) {
 }
 
 //------------------------------------------------------------------------------
-//LBM    Function: initUx 
+//LBM    Function: initU
 //------------------------------------------------------------------------------
-//PURPOSE:	Allocate memory for the ux matrix, and initialize it to the value
-//			specified in the input file.
-//USAGE:	initUx(lc,flow,params)
+//PURPOSE:	Allocate memory for, and initialize the velocity field. The velocity
+//			for all obtsacle cells are set to zero.
+//USAGE:	initU(lc,flow,params)
 //ARGUMENTS:
 //			Name 	 Type     		Description
 //.............................................................................
@@ -203,67 +201,25 @@ void mapObstacleCells(LatticeConsts* lc, SimParams* params) {
 //Author: Tobias Valentin Rye Torben
 //Date/Version: 29.03.2017
 //******************************************************************************
-void initUx(LatticeConsts* lc, FlowData* flow, SimParams* params) {
+void initU(LatticeConsts* lc, FlowData* flow, SimParams* params) {
 	int i,j,nx,ny;
-	double *ux;
+	double *uy,*ux;
 	
 	nx = lc->nx;
 	ny = lc->ny;	
-	ux = (double*) malloc(nx*ny * sizeof(double));
+	uy = (double*) calloc(nx*ny,sizeof(double));
+	ux = (double*) calloc(nx*ny,sizeof(double));
+	
 	for (i = 0; i < lc->nx; i++){
 		for (j = 0; j < lc->ny; j++) {
-			ux[(lc->ny)*i + j] = params->startVelX;
-		}
-	}
-	
-	for (i = 0; i < lc->nx; i++){
-		for (j = 0; j < lc->ny; j++){    
-			if (params->bbCellMat[i*(lc->ny) + j]) {
-				ux[(lc->ny)*i + j] = 0.0;
-			}
-	    }
-	}
-	
-	flow->ux = ux;	
-}
-//------------------------------------------------------------------------------
-//LBM    Function: initUy 
-//------------------------------------------------------------------------------
-//PURPOSE:	Allocate memory for the uy matrix, and initialize it to the value
-//			specified in the input file.
-//USAGE:	initUy(lc,flow,params)
-//ARGUMENTS:
-//			Name 	 Type     		Description
-//.............................................................................
-//			lc		LatticeConsts*	The constants of the D2Q9 lattice
-//			flow	FlowData*		The field variables of the flow
-//			params	SimParams* 		The parameters of the simulation		
-//.............................................................................
-//Author: Tobias Valentin Rye Torben
-//Date/Version: 29.03.2017
-//******************************************************************************
-void initUy(LatticeConsts* lc, FlowData* flow, SimParams* params) {
-	int i,j,nx,ny;
-	double *uy;
-	
-	nx = lc->nx;
-	ny = lc->ny;	
-	uy = (double*) malloc(nx*ny * sizeof(double));
-	for (i = 0; i < lc->nx; i++){
-		for (j = 0; j < lc->ny; j++) {
+			if (!(params->bbCellMat[i*(lc->ny) + j])){
 			uy[(lc->ny)*i + j] = params->startVelY;
+			ux[(lc->ny)*i + j] = params->startVelX;
+			}
 		}
 	}
-	
-	for (i = 0; i < lc->nx; i++){
-		for (j = 0; j < lc->ny; j++){    
-			if (params->bbCellMat[i*(lc->ny) + j]) {
-				uy[(lc->ny)*i + j] = 0.0;
-			}
-	    }
-	}
-	
 	flow->uy = uy;	
+	flow->ux = ux;
 }
 
 //------------------------------------------------------------------------------

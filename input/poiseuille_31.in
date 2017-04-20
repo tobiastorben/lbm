@@ -12,7 +12,7 @@ nThreads=3
 dx=0.03333333;
 
 %Time step
-dt=0.001
+dt=0.0002
 
 %Refrence velocity (For computing Reynolds Number, Lattice Mach number and non-dimensionalization)
 uRef=1
@@ -24,7 +24,7 @@ viscosity=1
 density=1000
 
 %ICs
-startVelX=0
+startVelX=0.5
 startVelY=0
 
 %BCs
@@ -44,13 +44,13 @@ east=pres,0,0
 south=vel,0,0
 
 %Number of iterations
-nIter=1000
+nIter=10000
 
 %Number of iterations between each result write
-cyclesPerWrite=1000
+cyclesPerWrite=10000
 
 %Number of iteration before result writing starts
-startWrite=1000
+startWrite=10000
 
 %Output directory (Default: ../res)
 outDir=../res/poiseuille
