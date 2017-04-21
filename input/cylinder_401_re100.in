@@ -35,13 +35,13 @@ startVelY=0
 west=vel,1,0
 
 %North BC
-north=vel,1,0
+north=pres,0,0
 
 %East BC
 east=pres,0,0
 
 %South BC
-south=vel,1,0
+south=pres,0,0
 
 %Number of iterations
 nIter=40000
