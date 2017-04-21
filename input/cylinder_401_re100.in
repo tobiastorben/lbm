@@ -50,11 +50,11 @@ nIter=40000
 cyclesPerWrite=20
 
 %Number of iteration before result writing starts
-startWrite=38000
+startWrite=0
 
 %Output directory (Default: ../res)
 outDir=../res/cylinder_re100
 
 %Results to be written (NB! Frequent writing of field variables will slow down the execution considerably)
 %Availiable options: X-velocity (ux), Y-velocity (uy), Pressure (p), Vorticity (vorticity), Lift and Drag (F)
-outputSelect=ux,uy,vorticity,F,p
+outputSelect=F
