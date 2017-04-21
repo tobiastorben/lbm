@@ -5,8 +5,8 @@ mkdir ../res/cavity_re100 ../res/cylinder_re1 ../res/foil_neutral ../res/poiseui
 ./lbm ../input/foil_neutral.in
 ./lbm ../input/foil_pitched.in
 ./lbm ../input/foil_stall.in
-./lbm ../input/cylinder_401_re1.in
-./lbm ../input/cylinder_401_re20.in
+#./lbm ../input/cylinder_401_re1.in
+#./lbm ../input/cylinder_401_re20.in
 ./lbm ../input/cylinder_401_re100.in
 #./lbm ../input/cavity_501_re100.in
 #./lbm ../input/cavity_501_re1000.in
