@@ -35,22 +35,22 @@ startVelY=0
 west=vel,1,0
 
 %North BC
-north=pres,0,0
+north=vel,1,0
 
 %East BC
 east=pres,0,0
 
 %South BC
-south=pres,0,0
+south=vel,1,0
 
 %Number of iterations
-nIter=70000
+nIter=100000
 
 %Number of iterations between each result write
 cyclesPerWrite=20
 
 %Number of iteration before result writing starts
-startWrite=65000
+startWrite=96000
 
 %Output directory (Default: ../res)
 outDir=../res/foil_neutral

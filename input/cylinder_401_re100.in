@@ -35,26 +35,26 @@ startVelY=0
 west=vel,1,0
 
 %North BC
-north=pres,0,0
+north=vel,1,0
 
 %East BC
 east=pres,0,0
 
 %South BC
-south=pres,0,0
+south=vel,1,0
 
 %Number of iterations
-nIter=40000
+nIter=100000
 
 %Number of iterations between each result write
 cyclesPerWrite=20
 
 %Number of iteration before result writing starts
-startWrite=0
+startWrite=96000
 
 %Output directory (Default: ../res)
 outDir=../res/cylinder_re100
 
 %Results to be written (NB! Frequent writing of field variables will slow down the execution considerably)
 %Availiable options: X-velocity (ux), Y-velocity (uy), Pressure (p), Vorticity (vorticity), Lift and Drag (F)
-outputSelect=F
+outputSelect=ux,uy,vorticity,F,p
