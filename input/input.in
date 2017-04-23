@@ -3,28 +3,28 @@
 %All simulation parameters below must be set to run the program. The order is arbitraty. "%" for comments
 
 %Path to obstacle file
-obstaclePath=../obstacleMasks/report/foil_050.mask
+obstaclePath=../obstacleMasks/report/square_31.mask
 
 %Number of threads for solving flow, minimum 2. One thread for writing output will come in addition
-nThreads=6
+nThreads=3
 
 %Spatial discretization step
-dx=0.0025
+dx=0.03333333;
 
 %Time step
-dt=0.0005
+dt=0.0002
 
 %Refrence velocity (For computing Reynolds Number, Lattice Mach number and non-dimensionalization)
 uRef=1
 
-%Fluid viscosity
-viscosity=0.002
+%Kinematic Kinematic viscosity
+viscosity=1
 
 %Fluid density
 density=1000
 
 %ICs
-startVelX=1
+startVelX=0.5
 startVelY=0
 
 %BCs
@@ -32,29 +32,29 @@ startVelY=0
 		 %Velocity BC: vel,<X-velocity>,<Y-velocity>
 
 %West BC
-west=vel,1,0
+west=pres,8000,0
 
 %North BC
-north=vel,1,0
+north=vel,0,0
 
 %East BC
 east=pres,0,0
 
 %South BC
-south=vel,1,0
+south=vel,0,0
 
 %Number of iterations
-nIter=50000
+nIter=10000
 
 %Number of iterations between each result write
-cyclesPerWrite=20
+cyclesPerWrite=10000
 
 %Number of iteration before result writing starts
-startWrite=20
+startWrite=10000
 
 %Output directory (Default: ../res)
-%outDir=../res/test
+outDir=../res/poiseuille
 
 %Results to be written (NB! Frequent writing of field variables will slow down the execution considerably)
 %Availiable options: X-velocity (ux), Y-velocity (uy), Pressure (p), Vorticity (vorticity), Lift and Drag (F)
-outputSelect=F
+outputSelect=ux

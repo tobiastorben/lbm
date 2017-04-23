@@ -11,4 +11,5 @@ void southXY(FlowData* flow, LatticeConsts * lc,int startX, int endX, double uxB
 void northXY(FlowData* flow, LatticeConsts * lc,int startX, int endX, double uxBC, double uyBC);
 void northPX(FlowData* flow, LatticeConsts * lc,int startX, int endX, double rhoBC, double uxBC);
 void bounce(FlowData* flow, LatticeConsts* lc, SimParams* params);
+
 #endif

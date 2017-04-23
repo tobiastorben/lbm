@@ -1,6 +1,6 @@
 #include "initialization.h"
 
-//This file contains all function to initialize the simulation, before it
+//This file contains all functions to initialize the simulation, before it
 //enters the main loop.
 
 //------------------------------------------------------------------------------

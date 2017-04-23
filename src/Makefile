@@ -1,20 +1,19 @@
-CC=gcc
-CFLAGS=-I$(IDIR) -std=c99 -m64 -Ofast -flto -march=native -funroll-loops -Wall -Wextra
+CFLAGS= -I$(IDIR) -std=c99 -m64 -Ofast -flto -march=native -funroll-loops -Wall -Wextra
 
 ODIR=../obj
 IDIR =../include
 
 LIBS= -lm -lpthread
 
-_DEPS = lbm.h utilities.h boundaries.h core.h initialization.h postProcessing.h inputParser.h structs.h
+_DEPS = lbm.h output.h boundaries.h core.h initialization.h inputParser.h structs.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-_OBJ = lbm.o utilities.o boundaries.o core.o initialization.o postProcessing.o inputParser.o
+_OBJ = lbm.o output.o boundaries.o core.o initialization.o inputParser.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 
 $(ODIR)/%.o: %.c $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+	gcc -c -o $@ $< $(CFLAGS)
 
 lbm: $(OBJ)
 	gcc -o $@ $^ $(CFLAGS) $(LIBS)

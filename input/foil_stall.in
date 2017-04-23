@@ -17,7 +17,7 @@ dt=0.0025
 %Refrence velocity (For computing Reynolds Number, Lattice Mach number and non-dimensionalization)
 uRef=1
 
-%Fluid viscosity
+%Kinematic viscosity
 viscosity=0.003
 
 %Fluid density

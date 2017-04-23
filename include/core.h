@@ -19,4 +19,5 @@ void streamBlockBoundaries(FlowData* flow,LatticeConsts* lc,SimParams* params);
 void* updateFirstBlock(void* tdata_void);
 void* updateLastBlock(void* tdata_void);
 void stream(FlowData* flow, LatticeConsts* lc);
+
 #endif
