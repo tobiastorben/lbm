@@ -29,20 +29,25 @@
 void step(FlowData* flow, LatticeConsts* lc, SimParams* params, ThreadData* tdata) {
 	int nThreads = params->nThreads;
 	
+	//Stream nodes between blocks
 	streamBlockBoundaries(flow,lc,params);
-
+	
+	//Launch east and west solver threads
 	pthread_create(&(tdata[0].thread),NULL,updateFirstBlock,&tdata[0]);
 	pthread_create(&(tdata[nThreads-1].thread),NULL,updateLastBlock,&tdata[nThreads-1]);
 	
+	//Launch other solver threads
 	for (int i = 1; i < nThreads-1; i++) {
 		pthread_create(&(tdata[i].thread),NULL,updateBlock,&tdata[i]);
 	}
-		
+	
+	//Synchronize all threads
 	for (int i = 0; i < nThreads; i++) {
 		pthread_join(tdata[i].thread,NULL);
 	}
-
-	bounce(flow,lc,params);//Bounce-back collision with obstacle
+	
+	//Bounce-back collision with obstacle
+	bounce(flow,lc,params);
 }
 
 //------------------------------------------------------------------------------
@@ -68,12 +73,12 @@ void step(FlowData* flow, LatticeConsts* lc, SimParams* params, ThreadData* tdat
 void* updateBlock(void* tdata_void) {
 	ThreadData* tdata = (ThreadData*) tdata_void;
 	BoundaryData* bcdata = tdata->bcdata;
-	streamBlockInterior(tdata->flow,tdata->lc,tdata->startX,tdata->endX);
-	(*(bcdata->southFun))(tdata->flow,tdata->lc,tdata->startX,tdata->endX,bcdata->southBC[0], bcdata->southBC[1]);
-	(*(bcdata->northFun))(tdata->flow,tdata->lc,tdata->startX,tdata->endX,bcdata->northBC[0], bcdata->northBC[1]);
-	updateRho(tdata->flow,tdata->lc,tdata->startX,tdata->endX);		
-	updateU(tdata->flow,tdata->lc,tdata->startX,tdata->endX);
-	collide(tdata->flow,tdata->lc,tdata->params,tdata->startX,tdata->endX);
+	streamBlockInterior(tdata->flow,tdata->lc,tdata->startX,tdata->endX);//Streaming
+	(*(bcdata->southFun))(tdata->flow,tdata->lc,tdata->startX,tdata->endX,bcdata->southBC[0], bcdata->southBC[1]);//South BC
+	(*(bcdata->northFun))(tdata->flow,tdata->lc,tdata->startX,tdata->endX,bcdata->northBC[0], bcdata->northBC[1]);//North BC
+	updateRho(tdata->flow,tdata->lc,tdata->startX,tdata->endX);//Update the density field	
+	updateU(tdata->flow,tdata->lc,tdata->startX,tdata->endX);//Update the velocity field
+	collide(tdata->flow,tdata->lc,tdata->params,tdata->startX,tdata->endX);//Collision step
 	return NULL;
 }
 
@@ -101,10 +106,10 @@ void* updateBlock(void* tdata_void) {
 void* updateFirstBlock(void* tdata_void) {
 	ThreadData* tdata = (ThreadData*) tdata_void;
 	BoundaryData* bcdata = tdata->bcdata;
-	streamFirstBlockInterior(tdata->flow,tdata->lc,tdata->endX);
+	streamFirstBlockInterior(tdata->flow,tdata->lc,tdata->endX);//Streaming west block
 	(*(bcdata->southFun))(tdata->flow,tdata->lc,tdata->startX+1,tdata->endX,bcdata->southBC[0], bcdata->southBC[1]);
 	(*(bcdata->northFun))(tdata->flow,tdata->lc,tdata->startX+1,tdata->endX,bcdata->northBC[0], bcdata->northBC[1]);
-	(*(bcdata->westFun))(tdata->flow,tdata->lc,bcdata->westBC[0], bcdata->westBC[1]);	
+	(*(bcdata->westFun))(tdata->flow,tdata->lc,bcdata->westBC[0], bcdata->westBC[1]);//West BC
 	updateRho(tdata->flow,tdata->lc,tdata->startX+1,tdata->endX);		
 	updateU(tdata->flow,tdata->lc,tdata->startX+1,tdata->endX);
 	collide(tdata->flow,tdata->lc,tdata->params,tdata->startX,tdata->endX);
@@ -135,10 +140,10 @@ void* updateFirstBlock(void* tdata_void) {
 void* updateLastBlock(void* tdata_void) {
 	ThreadData* tdata = (ThreadData*) tdata_void;
 	BoundaryData* bcdata = tdata->bcdata;
-	streamLastBlockInterior(tdata->flow,tdata->lc,tdata->startX);
+	streamLastBlockInterior(tdata->flow,tdata->lc,tdata->startX);//Streaming east block
 	(*(bcdata->southFun))(tdata->flow,tdata->lc,tdata->startX,tdata->endX-1,bcdata->southBC[0], bcdata->southBC[1]);
 	(*(bcdata->northFun))(tdata->flow,tdata->lc,tdata->startX,tdata->endX-1,bcdata->northBC[0], bcdata->northBC[1]);
-	(*(bcdata->eastFun))(tdata->flow,tdata->lc,bcdata->eastBC[0], bcdata->eastBC[1]);
+	(*(bcdata->eastFun))(tdata->flow,tdata->lc,bcdata->eastBC[0], bcdata->eastBC[1]);//East BC
 	updateRho(tdata->flow,tdata->lc,tdata->startX,tdata->endX-1);		
 	updateU(tdata->flow,tdata->lc,tdata->startX,tdata->endX-1);
 	collide(tdata->flow,tdata->lc,tdata->params,tdata->startX,tdata->endX);
@@ -168,6 +173,8 @@ void updateRho(FlowData* flow, LatticeConsts* lc, int startX, int endX) {
 	
 	nx =lc->nx;
 	ny = lc->ny;
+	
+	//Update density field
 	for (int i = startX; i <= endX; i++) {
 		for (int j = 1; j < ny-1; j++){
 			sum = 0;
@@ -211,7 +218,8 @@ void updateU(FlowData* flow, LatticeConsts* lc, int startX, int endX){
 	rho = flow->rho;
 	ux = flow->ux;
 	uy = flow->uy;
-
+	
+	//Update velocity field
 	for (i = startX; i <= endX; i++) {
 		for (j = 1; j < ny-1; j++){
 			sumX = 0;
@@ -271,11 +279,11 @@ void collide(FlowData* flow, LatticeConsts* lc, SimParams* params, int startX, i
 			uxIJ = ux[ny*i + j];
 			uyIJ = uy[ny*i + j];
 			rhoIJ = rho[ny*i + j];
-			uSq = 1.5*(uxIJ*uxIJ+uyIJ*uyIJ);
+			uSq = 1.5*(uxIJ*uxIJ+uyIJ*uyIJ);//Factorize loop invariant calculations
 			for (k = 0; k < 9; k++){
 				u = 3.0*(ex[k]*uxIJ + ey[k]*uyIJ);
-				fEq = rhoIJ*(w[k])*(1.0+u+0.5*u*u-uSq);
-				fOut[nxny*k + ny*i + j] = fIn[nxny*k + ny*i + j]-(fIn[nxny*k + ny*i + j]-fEq)/tau;
+				fEq = rhoIJ*(w[k])*(1.0+u+0.5*u*u-uSq);//Equilibrium distribution
+				fOut[nxny*k + ny*i + j] = fIn[nxny*k + ny*i + j]-(fIn[nxny*k + ny*i + j]-fEq)/tau;//Relax towards eq. distribution
 			}
 		}
 	}			 
@@ -477,6 +485,7 @@ void streamBlockBoundaries(FlowData* flow,LatticeConsts* lc,SimParams* params){
 	fOut = flow->fOut;
 	blockSize = params->blockSize;
 	
+	//Nodes between blocks, exept top and bottom
 	for (i = blockSize; i < nx-1; i+=blockSize) {
 		for (j = 1; j < ny-1; j++) {
 			for (k = 0; k < 9; k++) {
@@ -484,7 +493,7 @@ void streamBlockBoundaries(FlowData* flow,LatticeConsts* lc,SimParams* params){
 				fIn[nxny*k+ny*(i+1)+j] = fOut[k*nxny+(i+1-ex[k])*ny +j-ey[k]];
 			}
 		}
-		//North/South boundary
+		//Top and bottom
 		for (l = 0; l < 6; l++) {
 			k = northShiftArray[l];
 			fIn[nxny*k+ny*i+ny-1] = fOut[k*nxny+(i-ex[k])*ny +ny-1-ey[k]];

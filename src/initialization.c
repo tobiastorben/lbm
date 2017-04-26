@@ -50,13 +50,13 @@ void initialize(FlowData* flow, SimParams* params, LatticeConsts* lc, ThreadData
 	}
 
 	//Read geometry and set dimensions
-	readObstacle(lc,params);//Read obstacle data from file
-	mapObstacleCells(lc,params);//Array of indices to bounce back nodes
+	readObstacle(lc,params);//Read obstacle data into matrix
+	mapObstacleCells(lc,params);//Map obstacle cells into array of indices
 	
 	//Cast to non-dimensional form
 	nonDimensionalize(lc, params,bcdata);
 			
-	//ICs: Initialze flow as Poiseuille flow
+	//ICs: Initialze flow
 	nx = lc->nx;
 	ny = lc->ny;
 	initRho(lc,flow);
@@ -120,8 +120,8 @@ void readObstacle(LatticeConsts* lc, SimParams* params) {
 		token = strtok(line, ",");		
 		j = 0;
 		while( token != NULL ){ 	    
-		token = strtok(NULL, ",");
-		j++;
+			token = strtok(NULL, ",");
+			j++;
 	    }
 		i++;
 	}	
@@ -137,12 +137,12 @@ void readObstacle(LatticeConsts* lc, SimParams* params) {
 		token = strtok(line, ",");		
 		j = 0;
 		while( token != NULL ){ 	    
-		if (atoi(token) == 1) {
-			bbCellMat[i*(lc->ny) + j] = 1;
-			nBBCells++;
-		}
-		token = strtok(NULL, ",");
-		j++;
+			if (atoi(token) == 1) {
+				bbCellMat[i*(lc->ny) + j] = 1;
+				nBBCells++;
+			}
+			token = strtok(NULL, ",");
+			j++;
 	    }
 		i++;
 	}
@@ -210,6 +210,7 @@ void initU(LatticeConsts* lc, FlowData* flow, SimParams* params) {
 	uy = (double*) calloc(nx*ny,sizeof(double));
 	ux = (double*) calloc(nx*ny,sizeof(double));
 	
+	//Initialize as uniform flow
 	for (i = 0; i < lc->nx; i++){
 		for (j = 0; j < lc->ny; j++) {
 			if (!(params->bbCellMat[i*(lc->ny) + j])){
@@ -248,7 +249,7 @@ void initFOut(LatticeConsts* lc, FlowData* flow) {
 	fOut = (double*) malloc(nx*ny*9* sizeof(double));
 	
 	//Initialize particle distribution as equilibrium distrubution for
-	//still fluid
+	//uniform flow
 	for (k = 0; k < 9; k++){
 		for (i = 0; i < lc->nx; i++){
 			for (j = 0; j < lc->ny; j++){
@@ -281,6 +282,7 @@ void initRho(LatticeConsts* lc, FlowData* flow) {
 	ny = lc->ny;
 	rho = (double*) malloc(nx*ny* sizeof(double));
 	
+	//Initialize to 1.0
 	for (i = 0; i < nx; i++){
 			for (j = 0; j < ny; j++){
 			rho[ny*i + j] = 1.0;
@@ -313,16 +315,18 @@ void initRho(LatticeConsts* lc, FlowData* flow) {
 void nonDimensionalize(LatticeConsts* lc, SimParams* params, BoundaryData* bcdata) {
 	double width,Re,t0,dx,dt,nu,u0,scale,rhoPhys;
 	
-	scale = (params->dtPhys)/(params->dxPhys);
+	scale = (params->dtPhys)/(params->dxPhys);//Scale factor between physical and lattice velocity
 	rhoPhys = params->rhoPhys;
-	width = (params->dxPhys)*((lc->ny)-1);
-	t0 = width/(params->uRef);
-	Re = width*(params->uRef)/(params->nuPhys);
-	dx = 1.0/(lc->ny-1);
-	dt = (params->dtPhys)/t0;
-	u0 = dt/dx;
-	nu = dt/(dx*dx*Re);
-	params->tau = 3.0*nu + 0.5;
+	width = (params->dxPhys)*((lc->ny)-1);//Domain length in y-direction
+	t0 = width/(params->uRef);//Reference time
+	Re = width*(params->uRef)/(params->nuPhys);//Reynolds number, based on referance velocity and domain length in y-direction
+	dx = 1.0/(lc->ny-1);//Lattice spatial step size
+	dt = (params->dtPhys)/t0;//Lattice time step size
+	u0 = dt/dx;//Lattie velocity
+	nu = dt/(dx*dx*Re);//Viscocity in lattice units, preserves Reynolds number
+	params->tau = 3.0*nu + 0.5;//Relaxation time
+	
+	//Transform all IC's and BC to lattice units
 	params->startVelX = params->startVelX*scale;
 	params->startVelY = params->startVelY*scale;
 	
@@ -368,9 +372,9 @@ void nonDimensionalize(LatticeConsts* lc, SimParams* params, BoundaryData* bcdat
 	
 	printf("Numerical simulation parameters:\n");
 	printf("Reynolds number (based on domain length in Y-direction): %7f\n", Re);
-	printf("Lattice Mach number (based on refrance velocity): %.3f\n", (u0)*sqrt(3.0));
-	printf("Speed/Accuracy ratio: %.2f\n", dt/(dx*dx));
-	printf("Relaxation time: %.2f\n\n", params->tau);
+	printf("Lattice Mach number (based on refrance velocity): %.3f\n", (u0)*sqrt(3.0));//Lattice velocity divided by lattice speed of sound
+	printf("Speed/Accuracy ratio: %.2f\n", dt/(dx*dx));//Described the priority of a fast solution over an accurate solution. Bigger number favours speed.
+	printf("Relaxation time: %.2f\n\n", params->tau);//Relaxation time
 	
 	return;
 }
@@ -403,6 +407,7 @@ void setLatticeConstants(LatticeConsts* lc) {
 	int eastShiftArray[] = {0,1,2,4,5,8};
 	int southShiftArray[] = {0,1,3,4,7,8};
 	
+	//Copy to structs
 	memcpy(lc->w,w,sizeof(lc->w));
 	memcpy(lc->ex,ex,sizeof(lc->ex));
 	memcpy(lc->ey,ey,sizeof(lc->ey));

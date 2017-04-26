@@ -24,6 +24,7 @@ void writeU(double* u, int n, int m, double c, char* path) {
 	fp = fopen(path,"w");
 	for (int i = 0; i < n; i++){
 		for (int j = 0; j < m; j++){
+		//Convert velocity to physical units, and write to file
 		fprintf(fp,"%.3e",c*u[m*i + j]);
 		if (j != m-1) fprintf(fp,",");
 		}
@@ -48,6 +49,7 @@ void writeU(double* u, int n, int m, double c, char* path) {
 //******************************************************************************
 void writeTimeSeries(double* v, int n, char* path) {
 	FILE* fp = fopen(path,"a");
+	//Print the vector to the row in a file, in CSV format
 	for (int i = 0; i < (n-1); i++){
 		fprintf(fp,"%.5e, ", v[i]);
 		}
@@ -83,6 +85,7 @@ void writePres(double* rho, int n, int m, double c, double rhoPhys, char* path) 
 	cSq = c*c;
 	for (int i = 0; i < n; i++){
 		for (int j = 0; j < m; j++){
+		//Convert pressure to physical units, and write to file
 		fprintf(fp,"%.3e", rhoPhys*cSq*(1.0/3.0)*(rho[m*i + j]-1));
 		if (j != m-1) fprintf(fp,",");
 		}
@@ -121,7 +124,9 @@ void writeVorticity(double* ux, double* uy, int n, int m, double dt, char* path)
 	
 	for (int i = 0; i < (n-1); i++){
 		for (int j = 0; j < (m-1); j++){
+		//Calculate second order central difference approximation to vorticity
 		vort = coeff*(uy[(i+1)*m +j] - uy[(i-1)*m+j] - (ux[i*m +j+1] - ux[i*m +j-1]));
+		//Write to file
 		fprintf(fp,"%.3e", vort);
 		if (j != m-1) fprintf(fp,",");
 		}
@@ -153,14 +158,18 @@ void writeVorticity(double* ux, double* uy, int n, int m, double dt, char* path)
 //******************************************************************************
 void writeResults(FlowData* flow, LatticeConsts* lc, int iter, pthread_t* printThread, PrintData* pdata) {
 	int nx,ny;
+	//Wait if the last print thread has not finished yet. Do not wait if this is the first print
 	if (iter != pdata->params->startWrite) pthread_join(*printThread,NULL);
 	pdata->iter = iter;
 	nx = lc->nx;
 	ny = lc->ny;
 	
+	//Copy data to new memory locations, so they can be printed while the original matrices are updated
 	memcpy(pdata->uxCpy,flow->ux,nx*ny*sizeof(double));
 	memcpy(pdata->uyCpy,flow->uy,nx*ny*sizeof(double));
 	memcpy(pdata->rhoCpy,flow->rho,nx*ny*sizeof(double));
+	
+	//Launch print thread
 	pthread_create(printThread,NULL,launchWriteThread,pdata);
 	
 	return;
@@ -213,35 +222,35 @@ void* launchWriteThread(void* pdata_void) {
 	rhoPhys = params->rhoPhys;
 	c = dx/dt;
 	
-	if (outputSelect[0]) {
+	if (outputSelect[0]) {//Write x-velocity
 		strcpy(path,outDir);
 		sprintf(fName,"/ux%d.csv", iter);
 		strcat(path,fName);
 		writeU(ux,nx,ny,c,path);
 	}
 	
-	if (outputSelect[1]) {
+	if (outputSelect[1]) {//Write y-velocity
 		strcpy(path,outDir);
 		sprintf(fName,"/uy%d.csv", iter);
 		strcat(path,fName);
 		writeU(uy,nx,ny,c,path);
 	}
 	
-	if (outputSelect[2]) {
+	if (outputSelect[2]) {//Write pressure
 		strcpy(path,outDir);
 		sprintf(fName,"/p%d.csv", iter);
 		strcat(path,fName);
 		writePres(rho,nx,ny,c,rhoPhys,path);
 	}
 	
-	if (outputSelect[3]) {
+	if (outputSelect[3]) {//Write vorticity
 		strcpy(path,outDir);
 		sprintf(fName,"/vort%d.csv", iter);
 		strcat(path,fName);
 		writeVorticity(ux,uy,nx,ny,dt,path);
 	}
 	
-	if (outputSelect[4]) {
+	if (outputSelect[4]) {//Write Force vector on obstacle
 		strcpy(path,outDir);
 		strcpy(fName, "/F.csv");
 		strcat(path,fName);
@@ -315,13 +324,14 @@ double* calcF(int ny, SimParams* params, double* rho, double* ux, double* uy) {
 		i = bbCells[k];
 		j = bbCells[1*nBBcells +k];
 		
-		if (bbCellMat[(i+1)*ny + j] == 0) {
-			p = c*c*rhoPhys*(1.0/3.0)*(rho[(i+1)*ny + j]-1);
-			fric = c*rhoPhys*visc*(uy[(i+2)*ny + j] - uy[(i+1)*ny + j]);
-			F[0] -= p*dx;
-			F[1] += fric;
+		if (bbCellMat[(i+1)*ny + j] == 0) {//Check if the node is exposed to the fluid to its right
+			p = c*c*rhoPhys*(1.0/3.0)*(rho[(i+1)*ny + j]-1);//Calculate pressure
+			fric = c*rhoPhys*visc*(uy[(i+2)*ny + j] - uy[(i+1)*ny + j]);//Calculate shear stress due to skin friction, by a first order approximation of Newtons law of Friction
+			F[0] -= p*dx;//Add pressure contribution
+			F[1] += fric;//Add skin friction contribution
 		}
 		
+		//Analogously for left, top and bottom
 		if (bbCellMat[(i-1)*ny + j] == 0) {
 			p = c*c*rhoPhys*(1.0/3.0)*(rho[(i-1)*ny + j]-1);
 			fric = c*rhoPhys*visc*(uy[(i-2)*ny + j] - uy[(i-1)*ny + j]);

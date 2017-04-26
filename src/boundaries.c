@@ -34,6 +34,7 @@ void southXY(FlowData* flow, LatticeConsts * lc,int startX, int endX, double uxB
 	ny = lc->ny;
 	nxny = nx*ny;
 	
+	//Apply Zou/He velocity BC on south boundary
 	for (int i = startX; i <= endX;i++) {
 		rho[ny*i] = (1.0/(1.0-uyBC))*(fIn[i*ny] + fIn[nxny + i*ny] + fIn[3*nxny + i*ny]
 					+ 2.0*(fIn[4*nxny + i*ny] + fIn[7*nxny + i*ny] + fIn[8*nxny + i*ny]));
@@ -76,6 +77,7 @@ void southPX(FlowData* flow, LatticeConsts * lc,int startX, int endX, double rho
 	ny = lc->ny;
 	nxny = nx*ny;
 	
+	//Apply Zou/He pressure/velocity BC on south boundary
 	for (int i = startX; i <= endX;i++) {
 		flow->ux[ny*i] = uxBC;
 		flow->rho[ny*i] = rhoBC;
@@ -119,6 +121,7 @@ void northXY(FlowData* flow, LatticeConsts* lc,int startX, int endX, double uxBC
 	ny = lc->ny;
 	nxny = nx*ny;
 	
+	//Apply Zou/He velocity BC on north boundary
 	for (int i = startX; i <= endX;i++) {
 		rho[ny*i + ny -1] = (1.0/(1.0+uyBC))*(fIn[ny*i + ny -1] + fIn[nxny + ny*i + ny -1] + fIn[3*nxny + ny*i + ny -1]
 					+ 2.0*(fIn[2*nxny + ny*i + ny -1] + fIn[5*nxny + ny*i + ny -1] + fIn[6*nxny + ny*i + ny -1]));
@@ -161,6 +164,7 @@ void northPX(FlowData* flow, LatticeConsts * lc,int startX, int endX, double rho
 	ny = lc->ny;
 	nxny = nx*ny;
 	
+	//Apply Zou/He pressure/velocity BC on north boundary
 	for (int i = startX; i <= endX;i++) {
 		flow->ux[ny*i + ny-1] = uxBC;
 		flow->rho[ny*i + ny-1] = rhoBC;
@@ -199,7 +203,8 @@ void westXY(FlowData* flow, LatticeConsts* lc, double uxBC, double uyBC) {
 	ny = lc->ny;	
 	fIn = flow->fIn;
 	rho = flow->rho;
-
+	
+	//Apply Zou/He velocity BC on west boundary
 	for (int j = 1; j<ny-1;j++) {
 		flow->ux[j] = uxBC;
 		flow->uy[j] = uyBC;
@@ -211,7 +216,7 @@ void westXY(FlowData* flow, LatticeConsts* lc, double uxBC, double uyBC) {
 		fIn[8*nx*ny+j] = fIn[6*nx*ny+j] + 0.5*(fIn[2*nx*ny+j]-fIn[4*nx*ny+j]) - 0.5*(rhoJ*uyBC) + (1.0/6)*(rhoJ*uxBC);
 		flow->rho[j] = rhoJ;
 	}
-	//Bottom corner
+	//Bottom corner extrapolation
 	rho[0*ny + 0] = rho[1*ny + 0];
 	flow->ux[0*ny + 0] = flow->ux[1*ny + 0];
 	flow->uy[0*ny + 0] = flow->uy[1*ny + 0];
@@ -219,7 +224,7 @@ void westXY(FlowData* flow, LatticeConsts* lc, double uxBC, double uyBC) {
 	fIn[k*nx*ny + 0*ny + 0] = fIn[k*nx*ny + 1*ny + 0];
 	}
 	
-	//Top corner
+	//Top corner extrapolation
 	rho[0*ny + ny-1] = rho[1*ny + ny-1];
 	flow->ux[0*ny + ny-1] = flow->ux[1*ny + ny-1];
 	flow->uy[0*ny + ny-1] = flow->uy[1*ny + ny-1];
@@ -257,7 +262,8 @@ void westPY(FlowData* flow, LatticeConsts* lc, double rhoBC, double uyBC) {
 	fIn = flow->fIn;
 	ux = flow->ux;
 	rho = flow->rho;
-
+	
+	//Apply Zou/He pressure/velocity BC on west boundary
 	for (int j = 1; j<ny-1; j++) {
 		flow->rho[j] = rhoBC;
 		flow->uy[j] = uyBC;
@@ -269,7 +275,7 @@ void westPY(FlowData* flow, LatticeConsts* lc, double rhoBC, double uyBC) {
 		fIn[8*nx*ny+j] = fIn[6*nx*ny+j] + 0.5*(fIn[2*nx*ny+j]-fIn[4*nx*ny+j]) - 0.5*(rhoBC*uyBC) + (1.0/6)*(rhoBC*ux[j]);
 	}
 	
-	//Bottom corner
+	//Bottom corner extrapolation
 	rho[0*ny + 0] = rho[1*ny + 0];
 	flow->ux[0*ny + 0] = flow->ux[1*ny + 0];
 	flow->uy[0*ny + 0] = flow->uy[1*ny + 0];
@@ -277,7 +283,7 @@ void westPY(FlowData* flow, LatticeConsts* lc, double rhoBC, double uyBC) {
 	fIn[k*nx*ny + 0*ny + 0] = fIn[k*nx*ny + 1*ny + 0];
 	}
 	
-	//Top corner
+	//Top corner extrapolation
 	rho[0*ny + ny-1] = rho[1*ny + ny-1];
 	flow->ux[0*ny + ny-1] = flow->ux[1*ny + ny-1];
 	flow->uy[0*ny + ny-1] = flow->uy[1*ny + ny-1];
@@ -316,6 +322,7 @@ void eastPY(FlowData* flow, LatticeConsts* lc, double rhoBC, double uyBC) {
 	ux = flow->ux;
 	rho = flow->rho;
 	
+	//Apply Zou/He pressure/velocity BC on east boundary
 	for (int j = 1; j<ny-1; j++) {
 		flow->rho[(nx-1)*ny +j] = rhoBC;
 		flow->uy[(nx-1)*ny +j] = uyBC;
@@ -326,7 +333,7 @@ void eastPY(FlowData* flow, LatticeConsts* lc, double rhoBC, double uyBC) {
 		fIn[7*nx*ny+(nx-1)*ny + j] = fIn[5*nx*ny+(nx-1)*ny + j] + 0.5*(fIn[2*nx*ny+(nx-1)*ny + j]-fIn[4*nx*ny+(nx-1)*ny + j]) - 0.5*rhoBC*uyBC - (1.0/6)*rhoBC*ux[(nx-1)*ny +j];
 		fIn[6*nx*ny+(nx-1)*ny + j] = fIn[8*nx*ny+(nx-1)*ny + j] + 0.5*(fIn[4*nx*ny+(nx-1)*ny + j]-fIn[2*nx*ny+(nx-1)*ny + j]) + 0.5*rhoBC*uyBC - (1.0/6)*rhoBC*ux[(nx-1)*ny +j];
 	}
-	//Bottom corner
+	//Bottom corner extrapolation
 	rho[(nx-1)*ny + 0] = rho[(nx-2)*ny + 0];
 	flow->ux[(nx-1)*ny + 0] = flow->ux[(nx-2)*ny + 0];
 	flow->uy[(nx-1)*ny + 0] = flow->uy[(nx-2)*ny + 0];
@@ -334,7 +341,7 @@ void eastPY(FlowData* flow, LatticeConsts* lc, double rhoBC, double uyBC) {
 	fIn[k*nx*ny + (nx-1)*ny + 0] = fIn[k*nx*ny + (nx-2)*ny + 0];
 	}
 	
-	//Top corner
+	//Top corner extrapolation
 	rho[(nx-1)*ny + ny-1] = rho[(nx-2)*ny + ny-1];
 	flow->ux[(nx-1)*ny + ny-1] = flow->ux[(nx-2)*ny + ny-1];
 	flow->uy[(nx-1)*ny + ny-1] = flow->uy[(nx-2)*ny + ny-1];
@@ -371,6 +378,7 @@ void eastXY(FlowData* flow, LatticeConsts* lc, double uxBC, double uyBC) {
 	fIn = flow->fIn;
 	rho = flow->rho;
 	
+	//Apply Zou/He velocity BC on east boundary
 	for (int j = 1; j<ny-1;j++) {
 		flow->ux[(nx-1)*ny +j] = uxBC;
 		flow->uy[(nx-1)*ny +j] = uyBC;
@@ -383,7 +391,7 @@ void eastXY(FlowData* flow, LatticeConsts* lc, double uxBC, double uyBC) {
 		rho[(nx-1)*ny +j] = rhoJ;
 	}
 	
-	//Bottom corner
+	//Bottom corner extrapolation
 	rho[(nx-1)*ny + 0] = rho[(nx-2)*ny + 0];
 	flow->ux[(nx-1)*ny + 0] = flow->ux[(nx-2)*ny + 0];
 	flow->uy[(nx-1)*ny + 0] = flow->uy[(nx-2)*ny + 0];
@@ -391,7 +399,7 @@ void eastXY(FlowData* flow, LatticeConsts* lc, double uxBC, double uyBC) {
 	fIn[k*nx*ny + (nx-1)*ny + 0] = fIn[k*nx*ny + (nx-2)*ny + 0];
 	}
 	
-	//Top corner
+	//Top corner extrapolation
 	rho[(nx-1)*ny + ny-1] = rho[(nx-2)*ny + ny-1];
 	flow->ux[(nx-1)*ny + ny-1] = flow->ux[(nx-2)*ny + ny-1];
 	flow->uy[(nx-1)*ny + ny-1] = flow->uy[(nx-2)*ny + ny-1];
@@ -429,8 +437,10 @@ void bounce(FlowData* flow, LatticeConsts* lc, SimParams* params) {
 	
 	for (l = 0; l < params->nBBcells; l++) {
 		for (k = 0; k < 9; k++){
+				//Get indices of bounce back cell
 				i = params->bbCells[l];
 				j = params->bbCells[params->nBBcells+l];
+				//Reverse outgoing distribution
 				flow->fOut[nx*ny*k + ny*i + j] = flow->fIn[nx*ny*opp[k] + ny*i + j];
 		}
 	}	

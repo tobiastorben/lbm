@@ -28,82 +28,82 @@ int parseInput(char* inPath, SimParams* params, BoundaryData* bcdata) {
 	line =  (char*) malloc(1000);
 	params->obstaclePath = (char*) malloc(1000);
 	params->outDir = (char*) malloc(1000);
-	outputSelect =  (int*) calloc(5,sizeof(int));
+	outputSelect =  (int*) calloc(5,sizeof(int));//Boolean vector of which output to write
 	count = 0;
 	outDirIsSet = 0;
 	
 	while (!feof(fp)){
 		fgets(line,1000,fp);
-		token = strtok(line, "=");
+		token = strtok(line, "=");//Read line from file
 		if (token[0] == '%' || token[0] == '\r' || token[0] == '\n'){
-			continue;
+			continue;//Ignore comments and blank lines
 		}
-		else if(!strcmp(token,"obstaclePath")){
+		else if(!strcmp(token,"obstaclePath")){//Path to obstacle file
 		strcpy(params->obstaclePath,strtok(strtok(NULL, "="),"\r"));		
 			count++;
 		}
 				
-		else if(!strcmp(token,"dx")){
+		else if(!strcmp(token,"dx")){//Spatial step size
 			params->dxPhys = atof(strtok(NULL, "="));
 			count++;
 		}
 		
-		else if(!strcmp(token,"dt")){
+		else if(!strcmp(token,"dt")){//Time step size
 			params->dtPhys = atof(strtok(NULL, "="));
 			count++;
 		}
 		
-		else if(!strcmp(token,"uRef")){
+		else if(!strcmp(token,"uRef")){//Reference velocity
 			params->uRef = atof(strtok(NULL, "="));
 			count++;
 		}
 		
-		else if(!strcmp(token,"viscosity")){
+		else if(!strcmp(token,"viscosity")){//Kinematic velocity
 			params->nuPhys = atof(strtok(NULL, "="));
 			count++;
 		}
 		
-		else if(!strcmp(token,"density")){
+		else if(!strcmp(token,"density")){//Incompressible density
 			params->rhoPhys = atof(strtok(NULL, "="));
 			count++;
 		}
 		
-		else if(!strcmp(token,"startVelX")){
+		else if(!strcmp(token,"startVelX")){//Initial x-velocity
 			params->startVelX = atof(strtok(NULL, "="));
 			count++;
 		}
 		
-		else if(!strcmp(token,"startVelY")){
+		else if(!strcmp(token,"startVelY")){//Initial y-velocity
 			params->startVelY = atof(strtok(NULL, "="));
 			count++;
 		}
 		
-		else if(!strcmp(token,"nIter")){
+		else if(!strcmp(token,"nIter")){//Number of iterations
 			params->nIter = atoi(strtok(NULL, "="));
 			count++;
 		}
 		
-		else if(!strcmp(token,"cyclesPerWrite")){
+		else if(!strcmp(token,"cyclesPerWrite")){//Iterations between each result writing
 			params->cyclesPerWrite = atoi(strtok(NULL, "="));
 			count++;
 		}
 		
-		else if(!strcmp(token,"startWrite")){
+		else if(!strcmp(token,"startWrite")){//First iteration to write results
 			params->startWrite = atoi(strtok(NULL, "="));
 			count++;
 		}
 		
-		else if(!strcmp(token,"outDir")){
+		else if(!strcmp(token,"outDir")){//Path to directory where results should be written
 		strcpy(params->outDir,strtok(strtok(NULL, "="),"\r"));		
 		outDirIsSet = 1;
 		}
 		
-		else if(!strcmp(token,"nThreads")){
+		else if(!strcmp(token,"nThreads")){//Number of solver threads
 			params->nThreads = atoi(strtok(NULL, "="));	
 			count++;
 		}
 				
-		else if(!strcmp(token,"outputSelect")){
+		else if(!strcmp(token,"outputSelect")){//Which results to write
 			token = strtok(NULL, ",\r\n");
 			while( token != NULL ){			
 				if (!strcmp(token,"ux")) {
@@ -125,6 +125,7 @@ int parseInput(char* inPath, SimParams* params, BoundaryData* bcdata) {
 			}
 		}
 		
+		//Boundary conditions
 		else if(!strcmp(token,"west")){
 			token = strtok(NULL, ",\r\n");
 			if (!strcmp(token,"pres")) {
@@ -185,9 +186,9 @@ int parseInput(char* inPath, SimParams* params, BoundaryData* bcdata) {
 			count++;
 			}
 		}		
-	if (!outDirIsSet) strcpy(params->outDir,"../res");
+	if (!outDirIsSet) strcpy(params->outDir,"../res");//Defout output directory
 	params->outputSelect=outputSelect;
 	free(line);
 	fclose(fp);
-	return !(count == 16);
+	return !(count == 16);//Check that a minimum number of parameters has been set
 }
